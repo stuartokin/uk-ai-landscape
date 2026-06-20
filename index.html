@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>UK AI Governance — Connections Map</title>
+<style>
+  :root{
+    --ink:#0B1016; --ink2:#0E151D; --panel:#101A23; --panel2:#0C141B;
+    --line:#1E2C38; --line2:#283a49; --text:#D7E2EA; --dim:#8DA2B2; --faint:#5E7384;
+    --cyan:#5EEAD4; --cyanDim:#2c5a55;
+    --g-strategy:#E3B23C; --g-regulation:#A78BFA; --g-central:#38BDF8; --g-frontier:#F26D6D;
+    --g-defence:#B5B83A; --g-cyber:#F59E0B; --g-regulators:#6E8BF0; --g-public:#14B8A6;
+    --g-infra:#C2703D; --g-standards:#4ADE80; --g-energy:#F472B6;
+    --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--ink); color:var(--text);
+    font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  .mono{font-family:ui-monospace,"SF Mono","Menlo","Consolas",monospace}
+  /* subtle situational-grid backdrop */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(56,189,248,.06), transparent 45%),
+      radial-gradient(circle at 86% 88%, rgba(244,114,182,.05), transparent 45%),
+      linear-gradient(transparent 95%, rgba(120,150,170,.05) 95%) 0 0/26px 26px,
+      linear-gradient(90deg, transparent 95%, rgba(120,150,170,.05) 95%) 0 0/26px 26px;
+  }
+  .app{position:relative; z-index:1; height:100%; display:grid;
+    grid-template-columns:300px 1fr; grid-template-rows:auto 1fr auto;
+    grid-template-areas:"head head" "rail stage" "foot foot";}
+  /* ---------- header ---------- */
+  header{grid-area:head; padding:16px 22px 14px; border-bottom:1px solid var(--line);
+    display:flex; align-items:flex-end; justify-content:space-between; gap:18px;
+    background:linear-gradient(180deg,var(--ink2),transparent);}
+  .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--faint)}
+  h1{margin:3px 0 0; font-size:23px; font-weight:800; letter-spacing:-.01em; line-height:1.05}
+  h1 b{color:var(--cyan); font-weight:800}
+  .lede{margin-top:5px; font-size:12.5px; color:var(--dim); max-width:60ch}
+  .credit{text-align:right; font-size:11px; color:var(--faint); line-height:1.5; white-space:nowrap}
+  .credit b{color:var(--dim); font-weight:600}
+  /* ---------- rail ---------- */
+  .rail{grid-area:rail; border-right:1px solid var(--line); padding:16px 16px 14px;
+    overflow:auto; background:linear-gradient(180deg,var(--panel2),transparent 60%);}
+  .rail h2{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint);
+    margin:0 0 9px; font-weight:600}
+  .search{position:relative; margin-bottom:18px}
+  .search input{width:100%; background:var(--ink2); border:1px solid var(--line2); color:var(--text);
+    border-radius:9px; padding:9px 11px 9px 32px; font-size:13px; outline:none}
+  .search input:focus{border-color:var(--cyan); box-shadow:0 0 0 3px rgba(94,234,212,.12)}
+  .search svg{position:absolute; left:10px; top:9px; width:15px; height:15px; stroke:var(--faint)}
+  .trace{width:100%; display:flex; align-items:center; gap:9px; cursor:pointer;
+    background:linear-gradient(180deg,rgba(244,114,182,.12),rgba(244,114,182,.05));
+    border:1px solid rgba(244,114,182,.35); color:#ffd7e6; border-radius:10px;
+    padding:10px 12px; font-size:12.5px; font-weight:600; margin-bottom:18px; transition:.15s}
+  .trace:hover{border-color:var(--g-energy); background:rgba(244,114,182,.18)}
+  .trace.on{background:rgba(244,114,182,.22); border-color:var(--g-energy); box-shadow:0 0 0 3px rgba(244,114,182,.12)}
+  .trace .dot{width:9px;height:9px;border-radius:50%;background:var(--g-energy);box-shadow:0 0 10px var(--g-energy);flex:0 0 auto}
+  .legend{display:flex; flex-direction:column; gap:2px; margin-bottom:16px}
+  .leg{display:flex; align-items:center; gap:9px; padding:5px 7px; border-radius:7px; cursor:pointer;
+    font-size:12px; color:var(--dim); transition:.12s; user-select:none}
+  .leg:hover{background:var(--ink2); color:var(--text)}
+  .leg.off{opacity:.32}
+  .leg .sw{width:11px; height:11px; border-radius:3px; flex:0 0 auto}
+  .leg .ct{margin-left:auto; font-size:11px; color:var(--faint)}
+  .stats{display:flex; gap:14px; font-size:11px; color:var(--faint); border-top:1px solid var(--line);
+    padding-top:12px; margin-top:4px}
+  .stats b{color:var(--text); font-weight:700; font-size:15px; display:block}
+  .reset{margin-top:14px; width:100%; background:transparent; border:1px solid var(--line2);
+    color:var(--dim); border-radius:8px; padding:8px; font-size:12px; cursor:pointer; transition:.12s}
+  .reset:hover{border-color:var(--cyan); color:var(--text)}
+  .hint{margin-top:14px; font-size:10.5px; color:var(--faint); line-height:1.6}
+  /* ---------- footer / disclaimers ---------- */
+  .foot{grid-area:foot; border-top:1px solid var(--line);
+    background:linear-gradient(180deg,transparent,var(--ink2));
+    display:flex; flex-wrap:wrap; gap:5px 20px; justify-content:space-between; align-items:center;
+    padding:9px 22px; font-size:11px; color:var(--faint); line-height:1.45}
+  .foot b{color:var(--dim); font-weight:600}
+  .foot .warn{color:#F59E0B; font-weight:700; margin-right:5px}
+  .foot-l{max-width:70ch}
+  /* ---------- live update: button, found nodes, modal, toast ---------- */
+  .update{width:100%; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    background:linear-gradient(180deg,rgba(94,234,212,.12),rgba(94,234,212,.04));
+    border:1px solid rgba(94,234,212,.35); color:#bff7ec; border-radius:10px;
+    padding:10px 12px; font-size:12.5px; font-weight:600; margin-bottom:18px; transition:.15s}
+  .update:hover{border-color:var(--cyan); background:rgba(94,234,212,.18)}
+  .node.found circle{stroke:var(--cyan); stroke-width:2; stroke-dasharray:3 2; animation:fp 2.4s ease-in-out infinite}
+  @keyframes fp{0%,100%{stroke-opacity:.55}50%{stroke-opacity:1}}
+  .sheet-wrap{position:fixed; inset:0; z-index:20; display:none; align-items:center; justify-content:center;
+    background:rgba(4,8,12,.62); backdrop-filter:blur(3px); padding:18px}
+  .sheet-wrap.open{display:flex}
+  .sheet{position:relative; width:min(560px,100%); max-height:86vh; overflow:auto;
+    background:rgba(16,26,35,.98); border:1px solid var(--line2); border-radius:16px; box-shadow:var(--shadow); padding:22px}
+  .sheet .x{position:absolute; right:12px; top:12px; width:28px; height:28px; border-radius:8px;
+    border:1px solid var(--line2); background:transparent; color:var(--dim); cursor:pointer}
+  .sheet .x:hover{color:#fff; border-color:var(--cyan)}
+  .sheet-desc{font-size:12.5px; color:var(--dim); line-height:1.55; margin:4px 0 14px}
+  .sheet-desc b{color:var(--text)}
+  .sheet-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
+  .sheet-row input,.sheet-row select{background:var(--ink2); border:1px solid var(--line2); color:var(--text);
+    border-radius:9px; padding:9px 11px; font-size:13px; outline:none}
+  .sheet-row input#q{flex:1; min-width:170px}
+  .sheet-row input:focus,.sheet-row select:focus{border-color:var(--cyan)}
+  .sheet-row #go{background:var(--cyan); color:#04181a; border:none; font-weight:700; cursor:pointer; padding:9px 18px}
+  .adv input{width:100%; background:var(--ink2); border:1px dashed var(--line2); color:var(--dim);
+    border-radius:8px; padding:7px 10px; font-size:11px; outline:none; margin-bottom:10px}
+  .sheet-status{font-size:12px; color:var(--dim); min-height:16px; margin:4px 0; line-height:1.55}
+  .sheet-status.err{color:#ffb4a0}
+  .sheet-results{display:flex; flex-direction:column; gap:8px; margin:6px 0}
+  .cand{border:1px solid var(--line2); border-radius:10px; padding:10px 11px; background:var(--ink2)}
+  .cand h4{margin:0 0 3px; font-size:13px; font-weight:600; line-height:1.3}
+  .cand .m{font-size:10.5px; color:var(--faint); margin-bottom:7px}
+  .cand .row{display:flex; gap:8px; align-items:center}
+  .cand a{font-size:11.5px; color:var(--cyan); text-decoration:none}
+  .cand a:hover{text-decoration:underline}
+  .cand .add{margin-left:auto; background:rgba(94,234,212,.1); border:1px solid rgba(94,234,212,.3);
+    color:var(--cyan); border-radius:7px; padding:5px 11px; font-size:11.5px; cursor:pointer}
+  .cand .add:hover{background:rgba(94,234,212,.2)}
+  .cand .add.done{color:#9bd17e; border-color:rgba(127,176,105,.4); background:rgba(127,176,105,.12); cursor:default}
+  .sheet-note{font-size:10.5px; color:var(--faint); line-height:1.55; border-top:1px solid var(--line); padding-top:10px; margin-top:6px}
+  .toast{position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:8;
+    background:rgba(16,26,35,.96); border:1px solid var(--line2); border-radius:10px; padding:9px 12px;
+    font-size:12px; color:var(--text); display:none; align-items:center; gap:12px; box-shadow:var(--shadow); max-width:92%}
+  .toast.show{display:flex}
+  .toast b{color:var(--cyan)}
+  .toast button{background:transparent; border:1px solid var(--line2); color:var(--dim); border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer}
+  .toast button.go{background:var(--cyan); color:#04181a; border:none; font-weight:700}
+  .toast button:hover{color:#fff}
+  /* ---------- stage ---------- */
+  .stage{grid-area:stage; position:relative; overflow:hidden}
+  svg#net{width:100%; height:100%; display:block; cursor:grab; touch-action:none}
+  svg#net.grab{cursor:grabbing}
+  .link{stroke:var(--line2); stroke-width:1; opacity:.5; transition:opacity .2s, stroke .2s}
+  .link.energy{stroke:var(--g-energy); opacity:.55; stroke-dasharray:1 0}
+  .link.faded{opacity:.06}
+  .link.hot{stroke:var(--cyan); opacity:.95; stroke-width:1.7}
+  .link.hotE{stroke:var(--g-energy); opacity:.95; stroke-width:1.9; filter:drop-shadow(0 0 4px rgba(244,114,182,.6))}
+  .node circle{stroke:#0a1015; stroke-width:1.5; cursor:pointer; transition:r .15s, opacity .2s, stroke .15s}
+  .node.doc circle{stroke-dasharray:2.4 1.6}
+  .node.law circle{stroke:#cdd9e2; stroke-width:1.8}
+  .node text{font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:9.5px; fill:var(--dim);
+    pointer-events:none; transition:fill .2s, opacity .2s; paint-order:stroke;
+    stroke:rgba(7,11,15,.85); stroke-width:2.4px}
+  .node.faded{opacity:.18}
+  .node.faded text{opacity:0}
+  .node.sel circle{stroke:var(--cyan); stroke-width:2.4; filter:drop-shadow(0 0 8px rgba(94,234,212,.55))}
+  .node.sel text, .node.neighbour text{fill:#fff; opacity:1}
+  .node.hit text{fill:#fff}
+  .node.ofgem circle{stroke:var(--g-energy); stroke-width:2.2}
+  .edgelabel{font-family:ui-monospace,monospace; font-size:8.5px; fill:var(--cyan);
+    opacity:0; transition:opacity .2s; pointer-events:none; paint-order:stroke;
+    stroke:rgba(7,11,15,.9); stroke-width:2.6px}
+  .edgelabel.show{opacity:.92}
+  .edgelabel.e{fill:var(--g-energy)}
+  /* zoom controls */
+  .zoom{position:absolute; right:14px; bottom:14px; display:flex; flex-direction:column; gap:6px; z-index:4}
+  .zoom button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);
+    background:rgba(12,20,27,.8); color:var(--dim); font-size:17px; cursor:pointer; backdrop-filter:blur(6px)}
+  .zoom button:hover{border-color:var(--cyan); color:#fff}
+  /* ---------- detail panel ---------- */
+  .panel{position:absolute; top:14px; right:14px; width:330px; max-height:calc(100% - 28px);
+    background:rgba(16,26,35,.93); border:1px solid var(--line2); border-radius:14px;
+    box-shadow:var(--shadow); backdrop-filter:blur(10px); overflow:auto; z-index:5;
+    transform:translateX(118%); opacity:0; transition:transform .32s cubic-bezier(.2,.8,.2,1), opacity .25s;
+    padding:18px 18px 20px}
+  .panel.open{transform:none; opacity:1}
+  .panel .x{position:absolute; right:12px; top:12px; width:26px; height:26px; border-radius:7px;
+    border:1px solid var(--line2); background:transparent; color:var(--dim); cursor:pointer; font-size:14px}
+  .panel .x:hover{color:#fff; border-color:var(--cyan)}
+  .p-kind{display:inline-flex; align-items:center; gap:7px; font-size:10.5px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--faint); margin-bottom:8px}
+  .p-kind .sw{width:10px;height:10px;border-radius:3px}
+  .p-title{font-size:18px; font-weight:800; line-height:1.18; margin:0 30px 4px 0}
+  .p-meta{font-size:11px; color:var(--faint); margin-bottom:12px}
+  .p-desc{font-size:13px; color:var(--text); line-height:1.55; margin-bottom:15px}
+  .p-sec{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); margin:0 0 8px}
+  .p-links{display:flex; flex-direction:column; gap:7px; margin-bottom:16px}
+  .p-links a{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--cyan);
+    text-decoration:none; background:rgba(94,234,212,.07); border:1px solid rgba(94,234,212,.18);
+    border-radius:8px; padding:8px 10px; transition:.12s; word-break:break-word}
+  .p-links a:hover{background:rgba(94,234,212,.14); border-color:var(--cyan)}
+  .p-links a svg{width:13px;height:13px;stroke:var(--cyan);flex:0 0 auto}
+  .rels{display:flex; flex-direction:column; gap:6px}
+  .rel{display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;
+    padding:6px 8px; border-radius:7px; transition:.12s}
+  .rel:hover{background:var(--ink2)}
+  .rel .verb{font-family:ui-monospace,monospace; font-size:9.5px; color:var(--faint);
+    text-transform:uppercase; letter-spacing:.05em; flex:0 0 92px}
+  .rel .nm{color:var(--text)}
+  .rel .arr{color:var(--faint)}
+  .rel .nm .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  /* mobile menu toggle */
+  .menu-btn{display:none}
+  @media (max-width:820px){
+    .app{grid-template-columns:1fr; grid-template-rows:auto auto 1fr auto;
+      grid-template-areas:"head" "rail" "stage" "foot";}
+    .rail{max-height:42vh; border-right:none; border-bottom:1px solid var(--line)}
+    .foot{padding:8px 14px; font-size:10px}
+    .rail.collapsed{display:none}
+    .panel{left:10px; right:10px; width:auto; top:auto; bottom:10px; max-height:62%}
+    .panel{transform:translateY(118%)}
+    .panel.open{transform:none}
+    .credit{display:none}
+    .menu-btn{display:inline-flex; align-items:center; gap:7px; background:var(--ink2);
+      border:1px solid var(--line2); color:var(--dim); border-radius:8px; padding:7px 11px; font-size:12px; cursor:pointer}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="eyebrow mono">UK AI Governance · connections map</div>
+      <h1>Who owns what, and <b>what flows where</b></h1>
+      <div class="lede">Departments, regulators, codes and laws — and the lines between them. Click any node to light up its connections and open the official source.</div>
+    </div>
+    <div class="credit">
+      <b>Stuart Okin</b><br>Director, Cyber Regulation &amp; Emerging Technologies, Ofgem<br>
+      <span class="mono">Sources: official only · June 2026</span>
+      <div style="margin-top:8px"><button class="menu-btn" id="menuBtn">Filters</button></div>
+    </div>
+  </header>
+
+  <aside class="rail" id="rail">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" placeholder="Search bodies & documents…" autocomplete="off">
+    </div>
+
+    <button class="trace" id="traceBtn">
+      <span class="dot"></span> Trace Ofgem&rsquo;s world
+    </button>
+
+    <button class="update" id="updateBtn">&#x21BB;&nbsp; Check GOV.UK for new sources</button>
+
+    <h2>Themes — tap to filter</h2>
+    <div class="legend" id="legend"></div>
+
+    <div class="stats">
+      <div><b id="nCount">0</b><span class="mono">nodes</span></div>
+      <div><b id="lCount">0</b><span class="mono">links</span></div>
+      <div><b id="vCount">0</b><span class="mono">shown</span></div>
+    </div>
+    <button class="reset" id="reset">Reset view</button>
+    <div class="hint mono">Drag a node to pull it · scroll to zoom · drag the canvas to pan · click a relationship to jump.</div>
+  </aside>
+
+  <section class="stage" id="stage">
+    <svg id="net"><g id="view">
+      <g id="links"></g><g id="edgelabels"></g><g id="nodes"></g>
+    </g></svg>
+    <div class="toast" id="toast">
+      <span>Loaded from saved data. <b>Check GOV.UK</b> for newer sources?</span>
+      <button class="go" id="toastGo">Check now</button>
+      <button id="toastX">Dismiss</button>
+    </div>
+    <div class="zoom">
+      <button id="zin" aria-label="Zoom in">+</button>
+      <button id="zout" aria-label="Zoom out">&minus;</button>
+      <button id="zfit" aria-label="Fit" title="Fit">⤢</button>
+    </div>
+    <div class="panel" id="panel" role="dialog" aria-label="Details">
+      <button class="x" id="panelX" aria-label="Close">✕</button>
+      <div id="panelBody"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-l"><span class="warn">▲</span> AI-generated reference — may be incomplete or contain errors. Always check the linked official sources before relying on anything here.</div>
+    <div class="foot-r">Compiled by <b>Stuart Okin</b> in a personal capacity. Views are his own and not those of Ofgem. · <span class="mono">June 2026</span></div>
+  </footer>
+</div>
+
+<div class="sheet-wrap" id="sheetWrap">
+  <div class="sheet" role="dialog" aria-label="Check for new official sources" aria-modal="true">
+    <button class="x" id="sheetX" aria-label="Close">&#x2715;</button>
+    <div class="p-kind"><span class="sw" style="background:var(--cyan)"></span>Live &middot; GOV.UK Search API</div>
+    <h3 class="p-title">Check for new official sources</h3>
+    <p class="sheet-desc">Searches GOV.UK for recent AI publications from DSIT, MoD, GDS, DESNZ, MHRA and the CMA. Anything not already on the map is offered below; adding one places a new <b>unconnected</b> node (dashed cyan ring) with its official link, for you to wire in. The saved map keeps working regardless.</p>
+    <div class="sheet-row">
+      <input id="q" value="artificial intelligence" aria-label="Search term">
+      <select id="since" aria-label="Time window">
+        <option value="12">Last 12 months</option>
+        <option value="24" selected>Last 24 months</option>
+        <option value="60">Last 5 years</option>
+        <option value="0">Any time</option>
+      </select>
+      <button id="go">Search</button>
+    </div>
+    <div class="adv"><input id="proxy" placeholder="Optional CORS proxy base (advanced) &mdash; prepended to the API URL, or use {url}"></div>
+    <div id="status" class="sheet-status"></div>
+    <div id="results" class="sheet-results"></div>
+    <div class="sheet-note">Live from the GOV.UK Search API (<span class="mono">www.gov.uk/api/search.json</span>). Regulators on their own domains &mdash; Ofgem, ICO, Ofcom, FCA, ETSI &mdash; aren&rsquo;t covered here. Results are unverified: always open the source before relying on it.</div>
+  </div>
+</div>
+
+<script>
+/* ---------------- data: the UK AI governance landscape ---------------- */
+const GROUPS = {
+  strategy:{name:"Strategy & growth", c:"#E3B23C"},
+  regulation:{name:"Regulation & law", c:"#A78BFA"},
+  central:{name:"Lead dept & central", c:"#38BDF8"},
+  frontier:{name:"Safety & security (frontier)", c:"#F26D6D"},
+  defence:{name:"Defence AI", c:"#B5B83A"},
+  cyber:{name:"Cyber security of AI", c:"#F59E0B"},
+  regulators:{name:"Sector regulators", c:"#6E8BF0"},
+  public:{name:"Public-sector adoption", c:"#14B8A6"},
+  infra:{name:"Infrastructure & compute", c:"#C2703D"},
+  standards:{name:"Standards & research", c:"#4ADE80"},
+  energy:{name:"Energy (Ofgem's world)", c:"#F472B6"},
+  found:{name:"Found this session", c:"#F4FAFF"},
+};
+const N = (id,label,group,type,desc,links,date)=>({id,label,group,type,desc,links,date});
+const L = (s,t,rel,energy)=>({s,t,rel,energy:!!energy});
+
+const NODES = [
+  // central
+  N("dsit","DSIT","central","dept","Lead department for AI strategy, regulation, safety and compute.",[["DSIT","https://www.gov.uk/government/organisations/department-for-science-innovation-and-technology"]]),
+  N("gds","Government Digital Service","central","body","Drives public-sector AI adoption; owns the AI Playbook, ATRS and assurance work. Absorbed the RTAU (ex-CDEI).",[["GDS","https://www.gov.uk/government/organisations/government-digital-service"]]),
+  N("sov","Sovereign AI Unit","central","programme","Up to £500m to back UK AI capability and strategic points in the stack; works with the PM's AI Adviser.",[["Sovereign AI Unit","https://www.gov.uk/government/collections/sovereign-ai-unit"]]),
+  // strategy
+  N("natstrat","National AI Strategy","strategy","doc","The original 10-year framing (invest, adopt, govern). Foundational lineage.",[["Publication","https://www.gov.uk/government/publications/national-ai-strategy"]],"2021"),
+  N("aoap","AI Opportunities Action Plan","strategy","doc","Clifford's 50 recommendations (all accepted): foundations, adoption, and being an 'AI maker not taker'.",[["Action Plan","https://www.gov.uk/government/publications/ai-opportunities-action-plan/ai-opportunities-action-plan"],["Govt Response (PDF)","https://assets.publishing.service.gov.uk/media/678639913a9388161c5d2376/ai_opportunities_action_plan_government_repsonse.pdf"]],"Jan 2025"),
+  N("oneyear","Action Plan: One Year On","strategy","doc","Progress report on the 50 commitments; scaled public-service tools and the next phase of the Sovereign AI Unit.",[["Report","https://www.gov.uk/government/publications/ai-opportunities-action-plan-one-year-on/ai-opportunities-action-plan-one-year-on"]],"Jan 2026"),
+  N("indstrat","Industrial Strategy — Digital Sector Plan","strategy","doc","AI named as a frontier sector in the UK's modern industrial strategy.",[["Industrial Strategy","https://www.gov.uk/government/publications/industrial-strategy"]]),
+  // regulation & law
+  N("wp","Pro-innovation White Paper","regulation","doc","Established the principles-based, sector-led, 'no new AI regulator' model.",[["White Paper","https://www.gov.uk/government/publications/ai-regulation-a-pro-innovation-approach/white-paper"]],"Mar 2023"),
+  N("wpresp","White Paper response","regulation","doc","Confirmed the approach; £10m for regulator capability; first hint of future frontier measures.",[["Govt response","https://www.gov.uk/government/consultations/ai-regulation-a-pro-innovation-approach-policy-proposals/outcome/a-pro-innovation-approach-to-ai-regulation-government-response"]],"Feb 2024"),
+  N("principles","The Five AI Principles","regulation","framework","Safety/security; transparency; fairness; accountability; contestability. Non-statutory; regulators 'have regard'.",[["In the White Paper","https://www.gov.uk/government/publications/ai-regulation-a-pro-innovation-approach/white-paper"]]),
+  N("regguidance","Guidance for Regulators","regulation","doc","How regulators should interpret and apply the five principles in their remits.",[["Initial guidance (PDF)","https://assets.publishing.service.gov.uk/media/65c0b6bd63a23d0013c821a0/implementing_the_uk_ai_regulatory_principles_guidance_for_regulators.pdf"]],"Feb 2024"),
+  N("sosletters","SoS request letters","regulation","doc","Ministerial request asking named regulators to publish a strategic approach to AI by 30 Apr 2024.",[["SoS letters","https://www.gov.uk/government/publications/request-for-regulators-to-publish-an-update-on-their-strategic-approach-to-ai-secretary-of-state-letters"]],"Feb 2024"),
+  N("growthlab","Blueprint / AI Growth Lab","regulation","doc","Cross-economy sandboxes where specific rules can be relaxed under licence; replaces a near-term AI Bill.",[["Call for evidence","https://www.gov.uk/government/calls-for-evidence/ai-growth-lab/ai-growth-lab"]],"Oct 2025"),
+  N("aibill","AI (Regulation) Bill [HL]","regulation","law","Private Member's Bill (Lord Holmes) proposing a statutory AI authority — a marker of parliamentary appetite.",[["Bill text","https://bills.parliament.uk/publications/59353/documents/6094"]],"Mar 2025"),
+  N("duaa","Data (Use and Access) Act 2025","regulation","law","Reforms the Article 22 automated decision-making regime; triggers a statutory ICO Code; mandated the copyright report.",[["2025 c.18","https://www.legislation.gov.uk/ukpga/2025/18"]],"2025 c.18"),
+  N("copyright","Copyright & AI Report","regulation","doc","Government's long-game response to the Dec 2024 consultation; declines a broad text-and-data-mining exception.",[["Consultation & outputs","https://www.gov.uk/government/consultations/copyright-and-artificial-intelligence"]],"Mar 2026"),
+  // frontier
+  N("aisi","AI Security Institute (AISI)","frontier","body","DSIT directorate; evaluates frontier models for the most serious security risks (CBRN, cyber, autonomy).",[["AISI","https://www.aisi.gov.uk/about"],["Research agenda","https://www.aisi.gov.uk/research-agenda"],["Frontier AI Trends Report","https://www.aisi.gov.uk/frontier-ai-trends-report"]]),
+  N("intlreport","International AI Safety Report","frontier","doc","UK-commissioned, Bengio-chaired synthesis of the science on general-purpose AI risk; secretariat in AISI.",[["Report","https://internationalaisafetyreport.org"]]),
+  N("summits","AI Summit series","frontier","event","Bletchley (2023) → Seoul → Paris → India → Switzerland. UK originated the series and safety-institute network.",[["Bletchley Summit","https://www.gov.uk/government/topical-events/ai-safety-summit-2023"]]),
+  N("lasr","LASR","frontier","body","Laboratory for AI Security Research — joint NCSC / AISI / MoD / academia.",[["LASR announcement","https://www.gov.uk/government/news/uk-launches-ai-research-lab-to-boost-britains-cyber-defence"]]),
+  // defence
+  N("mod","Ministry of Defence","defence","dept","Operational military AI, run through the Defence AI Centre.",[["MoD","https://www.gov.uk/government/organisations/ministry-of-defence"]]),
+  N("defstrat","Defence AI Strategy","defence","doc","MoD vision to be the most effective, trusted defence organisation of its size on AI.",[["Strategy","https://www.gov.uk/government/publications/defence-artificial-intelligence-strategy"]],"2022"),
+  N("ambitious","Ambitious, Safe, Responsible","defence","doc","MoD's ethical principles for AI-enabled capability.",[["Policy statement","https://www.gov.uk/government/publications/ambitious-safe-responsible-our-approach-to-the-delivery-of-ai-enabled-capability-in-defence"]],"2022"),
+  N("defplaybook","Defence AI Playbook","defence","doc","Use-case illustrations from the Defence AI Centre (DAIC).",[["Playbook","https://www.gov.uk/government/publications/defence-ai-playbook"]],"2024"),
+  N("putdef","Putting AI at the Heart of Defence","defence","doc","Sharper operational posture (AI planning, uncrewed swarms, adversary-AI tracking).",[["Taskforce paper","https://www.gov.uk/government/publications/putting-artificial-intelligence-ai-at-the-heart-of-uk-defence/putting-artificial-intelligence-ai-at-the-heart-of-uk-defence"]],"2026"),
+  // cyber of AI
+  N("ncsc","NCSC","cyber","body","National Cyber Security Centre — owns the cyber-of-AI guidance and co-runs LASR.",[["NCSC","https://www.ncsc.gov.uk"]]),
+  N("ncscguide","NCSC Secure AI Guidelines","cyber","doc","The global anchor: secure design→development→deployment→operation. Endorsed by 18+ countries.",[["Guidelines","https://www.ncsc.gov.uk/collection/guidelines-secure-ai-system-development"]],"Nov 2023"),
+  N("aicode","AI Cyber Security Code of Practice","cyber","doc","DSIT's voluntary lifecycle code for the AI supply chain; designed to become the ETSI standard.",[["Code of Practice","https://www.gov.uk/government/publications/ai-cyber-security-code-of-practice/code-of-practice-for-the-cyber-security-of-ai"],["Implementation guide (PDF)","https://assets.publishing.service.gov.uk/media/679cae441d14e76535afb630/Implementation_Guide_for_the_AI_Cyber_Security_Code_of_Practice.pdf"]],"Jan 2025"),
+  N("swcode","Software Security Code of Practice","cyber","doc","Companion 14-principle code; the AI code sits as an addendum to it.",[["Software code","https://www.gov.uk/government/publications/software-security-code-of-practice"]],"May 2025"),
+  N("etsi","ETSI TS 104 223","cyber","law","The UK code carried into a formal technical specification — the first baseline AI-security standard.",[["ETSI TC SAI","https://www.etsi.org/committee/sai"]]),
+  // sector regulators
+  N("ico","ICO","regulators","body","De facto lead where AI processes personal data; AI & data-protection guidance + AI & biometrics strategy.",[["AI & data protection","https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/"],["AI & biometrics strategy","https://ico.org.uk/about-the-ico/our-information/our-strategies-and-plans/artificial-intelligence-and-biometrics-strategy/"]]),
+  N("cma","CMA","regulators","body","Competition in foundation-model markets; six AI principles; powers via the DMCC Act 2024.",[["AI Foundation Models","https://www.gov.uk/cma-cases/ai-foundation-models-initial-review"]]),
+  N("ofcom","Ofcom","regulators","body","AI in online services and networks (Online Safety Act; Telecoms Security Act).",[["Strategic approach to AI","https://www.ofcom.org.uk/about-ofcom/annual-reports-and-plans/ofcoms-strategic-approach-to-ai"]]),
+  N("fca","FCA","regulators","body","AI in financial services via the AI Lab, Live Testing and the Supercharged Sandbox.",[["FCA AI Lab","https://www.fca.org.uk/firms/innovation/ai-lab"]]),
+  N("boe","Bank of England / PRA","regulators","body","Financial-stability lens; joint AI strategy and PRA SS1/23 model-risk expectations.",[["Bank of England — AI","https://www.bankofengland.co.uk/artificial-intelligence"]]),
+  N("mhra","MHRA","regulators","body","AI as a medical device (AIaMD) and the 'AI Airlock' sandbox.",[["Software & AI as a medical device","https://www.gov.uk/government/collections/software-and-artificial-intelligence-ai-as-a-medical-device"]]),
+  N("ofgem","Ofgem","energy","body","Energy-sector AI / CNI lead. Strategic approach (2024) → sector guidance (2025) → AI Technical Sandbox & AI Reg Lab (2025–26), with a possible statutory AI duty ahead. Contact: AIPolicy@ofgem.gov.uk.",[["Strategic approach to AI","https://www.ofgem.gov.uk/publications/ofgems-strategic-approach-ai"],["Energy-sector AI guidance","https://www.ofgem.gov.uk/consultation/artificial-intelligence-ai-energy-sector-guidance-consultation"],["AI Technical Sandbox","https://www.ofgem.gov.uk/call-for-input/call-input-ai-technical-sandbox"]]),
+  N("onr","ONR","regulators","body","Office for Nuclear Regulation — regulating AI in the nuclear sector.",[["ONR","https://www.onr.org.uk"]]),
+  N("caa","CAA","regulators","body","Civil Aviation Authority — AI & advanced automation in aerospace; CAA AI Sandbox.",[["CAA","https://www.caa.co.uk"]]),
+  N("ofqual","Ofqual","regulators","body","AI in qualifications and assessment.",[["Ofqual","https://www.gov.uk/government/organisations/ofqual"]]),
+  N("ofsted","Ofsted","regulators","body","AI in the education settings it inspects.",[["Ofsted","https://www.gov.uk/government/organisations/ofsted"]]),
+  N("ehrc","EHRC","regulators","body","Equality and Human Rights Commission — AI, equality and the public-sector equality duty.",[["EHRC","https://www.equalityhumanrights.com"]]),
+  N("ofwat","Ofwat","regulators","body","Emerging AI position in the water sector.",[["Ofwat","https://www.ofwat.gov.uk"]]),
+  N("drcf","DRCF","regulators","forum","Coordination forum — ICO, CMA, Ofcom, FCA. Runs the AI & Digital Hub and joint GenAI research.",[["DRCF","https://www.drcf.org.uk"]]),
+  // public sector
+  N("playbook","AI Playbook for Government","public","doc","Ten principles for safe, effective public-sector AI use; supersedes the GenAI Framework.",[["AI Playbook","https://www.gov.uk/government/publications/ai-playbook-for-the-uk-government"]],"Feb 2025"),
+  N("genai","Generative AI Framework for HMG","public","doc","The earlier cross-government GenAI framework, now folded into the Playbook.",[["GenAI Framework","https://www.gov.uk/government/publications/generative-ai-framework-for-hmg"]],"Jan 2024"),
+  N("atrs","Algorithmic Transparency Recording Standard","public","doc","Mandatory transparency register for algorithmic tools in central-government decisions.",[["ATRS Hub","https://www.gov.uk/government/collections/algorithmic-transparency-recording-standard-hub"]]),
+  N("assurance","AI assurance ecosystem","public","doc","Introduction to AI Assurance plus the assurance roadmap, fund and NPL's Centre for AI Measurement.",[["Introduction to AI Assurance","https://www.gov.uk/government/publications/introduction-to-ai-assurance"]]),
+  N("ethics","Data & AI Ethics Framework","public","doc","Cross-government ethics guidance, refreshed Jan 2026; supported by the AI Knowledge Hub.",[["Data Ethics Framework","https://www.gov.uk/government/publications/data-ethics-framework"],["GDS AI adoption hub","https://roadmap-for-modern-digital-government.campaign.gov.uk/ai/guidance-for-ai-adoption"]],"2026"),
+  N("nhsai","NHS AI Lab","public","body","NHS England AI adoption, with the AI and Digital Regulations Service.",[["NHS AI Lab","https://transform.england.nhs.uk/ai-lab/"]]),
+  N("healthcomm","Commission on AI in Healthcare","public","body","National Commission into the Regulation of AI in Healthcare — advises government.",[["National Commission","https://www.gov.uk/government/groups/national-commission-into-the-regulation-of-ai-in-healthcare"]]),
+  // infrastructure
+  N("compute","UK Compute Roadmap","infra","doc","Modern compute ecosystem, prioritised allocation, AI Growth Zones and sovereign capability.",[["Compute Roadmap","https://www.gov.uk/government/publications/uk-compute-roadmap/uk-compute-roadmap"]],"Jul 2025"),
+  N("airr","AI Research Resource (AIRR)","infra","programme","Public compute for researchers; a ~20× expansion to 2030.",[["Defined in the Compute Roadmap","https://www.gov.uk/government/publications/uk-compute-roadmap/uk-compute-roadmap"]]),
+  N("aigz","AI Growth Zones","infra","programme","Accelerated planning, power and offtake for high-density AI data centres. Intersects the grid.",[["AIGZ delivery (One Year On)","https://www.gov.uk/government/publications/ai-opportunities-action-plan-one-year-on/ai-opportunities-action-plan-one-year-on"]]),
+  N("aiec","AI Energy Council","energy","body","DSIT + DESNZ body aligning compute growth with the grid and clean power.",[["AI Energy Council","https://www.gov.uk/government/groups/ai-energy-council"]]),
+  // standards & research
+  N("standardshub","AI Standards Hub","standards","body","DSIT-funded partnership of the Alan Turing Institute, BSI and NPL.",[["AI Standards Hub","https://aistandardshub.org"]]),
+  N("turing","Alan Turing Institute","standards","body","National institute for AI/data science; standards, safety and regulatory-capacity research.",[["Turing","https://www.turing.ac.uk"]]),
+  N("ukri","UKRI","standards","body","Research funding: AI hubs, BridgeAI adoption support, the Manchester Prize.",[["UKRI","https://www.ukri.org"]]),
+  N("raiuk","Responsible AI UK","standards","body","UKRI-funded national programme on responsible/trustworthy AI research.",[["RAi UK","https://rai.ac.uk"]]),
+  N("npl","NPL — Centre for AI Measurement","standards","body","Metrology for AI testing, verification and validation.",[["NPL","https://www.npl.co.uk"]]),
+  N("npsa","NPSA","standards","body","National Protective Security Authority — where AI meets physical/personnel security of CNI.",[["NPSA","https://www.npsa.gov.uk"]]),
+  N("bsi","BSI","standards","body","British Standards Institution — national standards body; AI Standards Hub partner.",[["BSI","https://www.bsigroup.com"]]),
+  // energy cluster
+  N("neso","NESO","energy","body","National Energy System Operator — grid operation and resilience.",[["NESO","https://www.neso.energy"]]),
+  N("desnz","DESNZ","energy","dept","Dept for Energy Security & Net Zero — energy policy and net zero.",[["DESNZ","https://www.gov.uk/government/organisations/department-for-energy-security-and-net-zero"]]),
+];
+
+const LINKS = [
+  // central ownership
+  L("dsit","aisi","hosts"), L("dsit","gds","leads"), L("dsit","sov","runs"),
+  L("dsit","natstrat","published"), L("dsit","aoap","published"), L("dsit","wp","published"),
+  L("dsit","growthlab","published"), L("dsit","aicode","published"), L("dsit","swcode","published"),
+  L("dsit","compute","published"), L("dsit","copyright","published"), L("dsit","standardshub","funds"),
+  // strategy lineage
+  L("natstrat","aoap","succeeded by"), L("aoap","oneyear","updated by"),
+  L("aoap","sov","launched"), L("aoap","aigz","launched"), L("aoap","airr","expanded"),
+  L("aoap","compute","led to"), L("aoap","aiec","announced"),
+  // regulation / principles
+  L("wp","principles","set out"), L("wp","wpresp","response"),
+  L("wpresp","regguidance","accompanied by"), L("wpresp","sosletters","asked regulators"),
+  L("growthlab","aibill","defers"), L("growthlab","principles","operationalises"),
+  L("duaa","ico","mandates ADM code"), L("duaa","copyright","mandated"),
+  // principles applied by regulators
+  L("principles","ico","applied by"), L("principles","cma","applied by"), L("principles","ofcom","applied by"),
+  L("principles","fca","applied by"), L("principles","boe","applied by"), L("principles","mhra","applied by"),
+  L("principles","ofgem","applied by",true), L("principles","onr","applied by"), L("principles","caa","applied by"),
+  L("principles","ofqual","applied by"), L("principles","ofsted","applied by"), L("principles","ehrc","applied by"),
+  // SoS request lineage (light)
+  L("sosletters","ofgem","requested",true), L("sosletters","ico","requested"), L("sosletters","cma","requested"), L("sosletters","ofcom","requested"),
+  // DRCF
+  L("drcf","ico","coordinates"), L("drcf","cma","coordinates"), L("drcf","ofcom","coordinates"), L("drcf","fca","coordinates"),
+  // cyber lineage
+  L("ncsc","ncscguide","published"), L("ncscguide","aicode","basis for"),
+  L("aicode","etsi","became"), L("aicode","swcode","addendum to"),
+  L("ncsc","aicode","co-developed"), L("ncsc","lasr","co-founded"), L("aisi","lasr","partner"), L("ncsc","aisi","partners"),
+  // frontier
+  L("aisi","intlreport","secretariat"), L("summits","intlreport","commissioned"), L("summits","aisi","founded"),
+  // defence
+  L("mod","defstrat","published"), L("mod","ambitious","published"), L("mod","defplaybook","published"),
+  L("mod","putdef","published"), L("defstrat","defplaybook","delivered via"),
+  // public sector / GDS
+  L("gds","playbook","published"), L("playbook","genai","supersedes"), L("gds","atrs","runs"),
+  L("gds","assurance","leads"), L("gds","ethics","publishes"), L("assurance","npl","includes"),
+  L("playbook","principles","builds on"),
+  L("mhra","nhsai","works with"), L("healthcomm","mhra","informs"),
+  // infrastructure
+  L("compute","airr","defines"), L("compute","aigz","defines"),
+  L("aiec","aigz","powers",true), L("aiec","desnz","joint",true), L("aiec","dsit","joint"),
+  // standards & research
+  L("standardshub","turing","partner"), L("standardshub","bsi","partner"), L("standardshub","npl","partner"),
+  L("ukri","raiuk","funds"), L("ukri","turing","funds"),
+  // energy thread (Ofgem's world)
+  L("ofgem","neso","coordinates",true), L("ofgem","desnz","works with",true),
+  L("ofgem","ncsc","works with",true), L("ofgem","aiec","aligns with",true), L("ofgem","aigz","intersects",true),
+];
+
+/* ---------------- build graph ---------------- */
+const byId = Object.fromEntries(NODES.map(n=>[n.id,n]));
+LINKS.forEach(l=>{ l.source=byId[l.s]; l.target=byId[l.t]; });
+// degree → radius
+NODES.forEach(n=>n.deg=0);
+LINKS.forEach(l=>{ l.source.deg++; l.target.deg++; });
+const RAD = n => 6 + Math.min(11, Math.sqrt(n.deg)*3.0) + (n.type==="dept"?2:0) + (n.id==="principles"||n.id==="dsit"?3:0);
+
+const NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("net"), gView=document.getElementById("view");
+const gLinks=document.getElementById("links"), gNodes=document.getElementById("nodes"), gEdge=document.getElementById("edgelabels");
+let W=svg.clientWidth, H=svg.clientHeight, cx=W/2, cy=H/2;
+
+// init positions in a loose ring by group
+const groupKeys=Object.keys(GROUPS);
+NODES.forEach((n,i)=>{
+  const gi=groupKeys.indexOf(n.group);
+  const a=(gi/groupKeys.length)*Math.PI*2 + (i%7)*0.16;
+  const r=Math.min(W,H)*0.30 + (i%5)*14;
+  n.x=cx+Math.cos(a)*r; n.y=cy+Math.sin(a)*r; n.vx=0; n.vy=0;
+});
+
+// build link + node elements (reusable so runtime-added nodes work the same way)
+function buildLink(l){
+  const ln=document.createElementNS(NS,"line");
+  ln.setAttribute("class","link"+(l.energy?" energy":""));
+  gLinks.appendChild(ln); l.el=ln;
+  const tx=document.createElementNS(NS,"text");
+  tx.setAttribute("class","edgelabel"+(l.energy?" e":"")); tx.textContent=l.rel;
+  gEdge.appendChild(tx); l.tx=tx;
+  return ln;
+}
+function buildNode(n){
+  const g=document.createElementNS(NS,"g");
+  g.setAttribute("class","node "+(n.type==="doc"?"doc ":n.type==="law"?"law ":"")+(n.id==="ofgem"?"ofgem ":"")+(n.group==="found"?"found ":""));
+  g.setAttribute("tabindex","0");
+  const c=document.createElementNS(NS,"circle");
+  c.setAttribute("r",RAD(n)); c.setAttribute("fill",GROUPS[n.group].c);
+  const t=document.createElementNS(NS,"text");
+  t.setAttribute("text-anchor","middle"); t.setAttribute("dy",RAD(n)+11); t.textContent=n.label;
+  g.appendChild(c); g.appendChild(t); gNodes.appendChild(g);
+  n.el=g; n.circle=c; n.text=t;
+  bindNode(g,n);
+  return g;
+}
+function bindNode(g,n){
+  let dragging=false, dox,doy;
+  g.addEventListener("pointerdown",e=>{
+    e.stopPropagation(); dragging=true; n.fixed=true; reheat(0.4);
+    g.setPointerCapture(e.pointerId);
+    const p=toGraph(e); dox=p.x-n.x; doy=p.y-n.y;
+  });
+  g.addEventListener("pointermove",e=>{ if(!dragging) return; const p=toGraph(e); n.x=p.x-dox; n.y=p.y-doy; n.vx=n.vy=0; });
+  g.addEventListener("pointerup",e=>{ dragging=false; n.fixed=false; });
+  g.addEventListener("click",e=>{ e.stopPropagation(); select(n); });
+  g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); select(n);} });
+  g.addEventListener("mouseenter",()=>hover(n,true));
+  g.addEventListener("mouseleave",()=>hover(n,false));
+}
+let linkEls=LINKS.map(buildLink);
+let nodeEls=NODES.map(buildNode);
+
+/* ---------------- force simulation ---------------- */
+let alpha=1, running=true;
+const REPULSE=2600, SPRING=0.022, LEN=96, GRAV=0.018, DAMP=0.86;
+function step(){
+  const active=NODES.filter(n=>!n.hidden);
+  // repulsion (O(n^2) over active)
+  for(let i=0;i<active.length;i++){
+    const a=active[i];
+    for(let j=i+1;j<active.length;j++){
+      const b=active[j];
+      let dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy||0.01;
+      let d=Math.sqrt(d2);
+      const f=REPULSE/d2;
+      const fx=dx/d*f, fy=dy/d*f;
+      a.vx+=fx*alpha; a.vy+=fy*alpha; b.vx-=fx*alpha; b.vy-=fy*alpha;
+    }
+  }
+  // springs
+  for(const l of LINKS){
+    if(l.source.hidden||l.target.hidden) continue;
+    let dx=l.target.x-l.source.x, dy=l.target.y-l.source.y;
+    let d=Math.sqrt(dx*dx+dy*dy)||0.01;
+    const f=(d-LEN)*SPRING;
+    const fx=dx/d*f, fy=dy/d*f;
+    l.source.vx+=fx*alpha; l.source.vy+=fy*alpha;
+    l.target.vx-=fx*alpha; l.target.vy-=fy*alpha;
+  }
+  // gravity + integrate
+  for(const n of active){
+    if(n.fixed) continue;
+    n.vx+=(cx-n.x)*GRAV*alpha; n.vy+=(cy-n.y)*GRAV*alpha;
+    n.vx*=DAMP; n.vy*=DAMP;
+    n.x+=n.vx; n.y+=n.vy;
+  }
+  alpha*=0.992; if(alpha<0.02) alpha=0.02;
+}
+function draw(){
+  for(const l of LINKS){
+    if(l.source.hidden||l.target.hidden){ l.el.style.display="none"; l.tx.style.display="none"; continue; }
+    l.el.style.display=""; 
+    l.el.setAttribute("x1",l.source.x); l.el.setAttribute("y1",l.source.y);
+    l.el.setAttribute("x2",l.target.x); l.el.setAttribute("y2",l.target.y);
+    if(l.tx.classList.contains("show")){
+      l.tx.style.display="";
+      l.tx.setAttribute("x",(l.source.x+l.target.x)/2); l.tx.setAttribute("y",(l.source.y+l.target.y)/2-2);
+    } else l.tx.style.display="none";
+  }
+  for(const n of NODES){
+    n.el.style.display=n.hidden?"none":"";
+    if(!n.hidden) n.el.setAttribute("transform",`translate(${n.x},${n.y})`);
+  }
+}
+let raf;
+function loop(){ if(running){ step(); } draw(); raf=requestAnimationFrame(loop); }
+function reheat(a=0.5){ alpha=Math.max(alpha,a); running=true; }
+// reduced motion: settle synchronously
+if(matchMedia("(prefers-reduced-motion:reduce)").matches){
+  for(let i=0;i<260;i++) step(); running=false;
+}
+loop();
+
+/* ---------------- zoom & pan ---------------- */
+let scale=0.8, ox=0, oy=0;
+function applyView(){ gView.setAttribute("transform",`translate(${ox},${oy}) scale(${scale})`); }
+function fit(){
+  const xs=NODES.filter(n=>!n.hidden), 
+    minX=Math.min(...xs.map(n=>n.x)), maxX=Math.max(...xs.map(n=>n.x)),
+    minY=Math.min(...xs.map(n=>n.y)), maxY=Math.max(...xs.map(n=>n.y));
+  const w=maxX-minX||1, h=maxY-minY||1; const pad=70;
+  scale=Math.min(2.2, Math.max(0.35, Math.min((W-pad*2)/w,(H-pad*2)/h)));
+  ox=W/2-(minX+maxX)/2*scale; oy=H/2-(minY+maxY)/2*scale; applyView();
+}
+setTimeout(fit,400);
+applyView();
+
+let panning=false, sx,sy,sox,soy;
+svg.addEventListener("pointerdown",e=>{
+  if(e.target.closest(".node")) return;
+  panning=true; svg.classList.add("grab"); sx=e.clientX; sy=e.clientY; sox=ox; soy=oy;
+  svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener("pointermove",e=>{
+  if(panning){ ox=sox+(e.clientX-sx); oy=soy+(e.clientY-sy); applyView(); }
+});
+svg.addEventListener("pointerup",e=>{ panning=false; svg.classList.remove("grab"); });
+svg.addEventListener("wheel",e=>{
+  e.preventDefault();
+  const r=svg.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const k=e.deltaY<0?1.12:1/1.12; const ns=Math.min(3,Math.max(0.3,scale*k));
+  ox=mx-(mx-ox)*(ns/scale); oy=my-(my-oy)*(ns/scale); scale=ns; applyView();
+},{passive:false});
+document.getElementById("zin").onclick=()=>{scale=Math.min(3,scale*1.2);applyView();};
+document.getElementById("zout").onclick=()=>{scale=Math.max(0.3,scale/1.2);applyView();};
+document.getElementById("zfit").onclick=fit;
+
+/* ---------------- pointer → graph coords ---------------- */
+function toGraph(e){ const r=svg.getBoundingClientRect();
+  return {x:(e.clientX-r.left-ox)/scale, y:(e.clientY-r.top-oy)/scale}; }
+
+/* ---------------- selection / focus ---------------- */
+let selected=null, traceOn=false;
+function neighbours(n){
+  const set=new Set([n.id]); const rels=[];
+  for(const l of LINKS){
+    if(l.source.id===n.id){ set.add(l.target.id); rels.push({dir:"out",rel:l.rel,other:l.target,energy:l.energy,l}); }
+    else if(l.target.id===n.id){ set.add(l.source.id); rels.push({dir:"in",rel:l.rel,other:l.source,energy:l.energy,l}); }
+  }
+  return {set,rels};
+}
+function clearFx(){
+  NODES.forEach(n=>n.el.classList.remove("faded","sel","neighbour"));
+  LINKS.forEach(l=>{ l.el.classList.remove("faded","hot","hotE"); l.tx.classList.remove("show"); });
+}
+function select(n){
+  selected=n;
+  if(traceOn) toggleTrace(false,true);
+  clearFx();
+  const {set,rels}=neighbours(n);
+  NODES.forEach(m=>{ if(!set.has(m.id)) m.el.classList.add("faded"); });
+  n.el.classList.add("sel");
+  rels.forEach(r=>{
+    r.other.el.classList.add("neighbour");
+    r.l.el.classList.add(r.energy?"hotE":"hot"); r.l.tx.classList.add("show");
+  });
+  openPanel(n,rels); reheat(0.18);
+}
+function hover(n,on){
+  if(selected||traceOn) return;
+  if(on){ const {set}=neighbours(n);
+    LINKS.forEach(l=>{ const inv=l.source.id===n.id||l.target.id===n.id;
+      if(inv){ l.el.classList.add(l.energy?"hotE":"hot"); l.tx.classList.add("show"); } });
+    n.el.classList.add("hit");
+  } else { clearFx(); n.el.classList.remove("hit"); }
+}
+
+/* ---------------- detail panel ---------------- */
+const panel=document.getElementById("panel"), panelBody=document.getElementById("panelBody");
+document.getElementById("panelX").onclick=closePanel;
+function escapeHTML(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+const TYPELABEL={dept:"Department",body:"Body",doc:"Document",law:"Law / standard",
+  framework:"Framework",programme:"Programme",forum:"Forum",event:"Event series"};
+function openPanel(n,rels){
+  const g=GROUPS[n.group];
+  const linkHtml=n.links.map(([lab,url])=>`<a href="${url}" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14 21 3"/><path d="M21 9V3h-6"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+    <span>${escapeHTML(lab)}</span></a>`).join("");
+  const relHtml=rels.sort((a,b)=>a.dir.localeCompare(b.dir)).map(r=>{
+    const c=GROUPS[r.other.group].c;
+    const arrow=r.dir==="out"?"→":"←";
+    return `<div class="rel" data-id="${r.other.id}">
+      <span class="verb">${escapeHTML(r.rel)}</span>
+      <span class="arr">${arrow}</span>
+      <span class="nm"><span class="sw" style="background:${c}"></span>${escapeHTML(r.other.label)}</span></div>`;
+  }).join("");
+  panelBody.innerHTML=`
+    <div class="p-kind"><span class="sw" style="background:${g.c}"></span>${escapeHTML(g.name)} · ${TYPELABEL[n.type]||""}</div>
+    <h3 class="p-title">${escapeHTML(n.label)}</h3>
+    <div class="p-meta mono">${n.date?escapeHTML(n.date)+" · ":""}${rels.length} connection${rels.length!==1?"s":""}</div>
+    <p class="p-desc">${escapeHTML(n.desc)}</p>
+    <p class="p-sec">Official source${n.links.length>1?"s":""}</p>
+    <div class="p-links">${linkHtml}</div>
+    <p class="p-sec">Connections</p>
+    <div class="rels">${relHtml||'<div class="rel"><span class="nm">—</span></div>'}</div>`;
+  panelBody.querySelectorAll(".rel[data-id]").forEach(el=>{
+    el.onclick=()=>{ const m=byId[el.dataset.id]; if(m) select(m); };
+  });
+  panel.classList.add("open");
+}
+function closePanel(){ panel.classList.remove("open"); selected=null; clearFx(); }
+svg.addEventListener("click",e=>{ if(!e.target.closest(".node")){ closePanel(); } });
+
+/* ---------------- trace Ofgem's world ---------------- */
+const traceBtn=document.getElementById("traceBtn");
+function toggleTrace(force,silent){
+  traceOn = force!==undefined?force:!traceOn;
+  traceBtn.classList.toggle("on",traceOn);
+  if(silent) return;
+  clearFx(); selected=null; panel.classList.remove("open");
+  if(!traceOn) return;
+  // BFS 2 hops from Ofgem along energy + direct links
+  const keep=new Set(["ofgem"]); const energyLinks=[];
+  LINKS.forEach(l=>{
+    if(l.source.id==="ofgem"||l.target.id==="ofgem"){
+      keep.add(l.source.id); keep.add(l.target.id); energyLinks.push(l);
+    }
+  });
+  // include energy-flagged links among kept nodes
+  LINKS.forEach(l=>{
+    if(l.energy && (keep.has(l.source.id)||keep.has(l.target.id))){
+      keep.add(l.source.id); keep.add(l.target.id); if(!energyLinks.includes(l)) energyLinks.push(l);
+    }
+  });
+  NODES.forEach(m=>{ if(!keep.has(m.id)) m.el.classList.add("faded"); });
+  byId.ofgem.el.classList.add("sel");
+  energyLinks.forEach(l=>{ l.el.classList.add(l.energy?"hotE":"hot"); l.tx.classList.add("show"); });
+  const {rels}=neighbours(byId.ofgem); openPanel(byId.ofgem,rels);
+  reheat(0.15);
+}
+traceBtn.onclick=()=>toggleTrace();
+
+/* ---------------- legend / filters ---------------- */
+const legend=document.getElementById("legend");
+const counts={}; NODES.forEach(n=>counts[n.group]=(counts[n.group]||0)+1);
+const active=new Set(groupKeys);
+groupKeys.forEach(k=>{
+  const g=GROUPS[k];
+  const el=document.createElement("div"); el.className="leg"; el.dataset.k=k;
+  el.innerHTML=`<span class="sw" style="background:${g.c}"></span><span>${g.name}</span><span class="ct mono">${counts[k]||0}</span>`;
+  el.onclick=()=>{
+    if(active.has(k)){active.delete(k); el.classList.add("off");}
+    else{active.add(k); el.classList.remove("off");}
+    applyFilter();
+  };
+  legend.appendChild(el);
+});
+function applyFilter(){
+  NODES.forEach(n=>n.hidden=!active.has(n.group));
+  updateCounts(); reheat(0.4); setTimeout(fit,300);
+}
+function updateCounts(){
+  document.getElementById("nCount").textContent=NODES.length;
+  document.getElementById("lCount").textContent=LINKS.length;
+  document.getElementById("vCount").textContent=NODES.filter(n=>!n.hidden).length;
+}
+updateCounts();
+
+/* ---------------- search ---------------- */
+const search=document.getElementById("search");
+search.addEventListener("input",()=>{
+  const q=search.value.trim().toLowerCase();
+  if(!q){ if(!selected&&!traceOn) clearFx(); return; }
+  if(selected||traceOn){selected=null;traceOn=false;traceBtn.classList.remove("on");panel.classList.remove("open");}
+  clearFx();
+  NODES.forEach(n=>{
+    const hit=n.label.toLowerCase().includes(q)||n.desc.toLowerCase().includes(q)||GROUPS[n.group].name.toLowerCase().includes(q);
+    if(n.hidden) return;
+    n.el.classList.toggle("faded",!hit);
+    n.el.classList.toggle("hit",hit);
+  });
+});
+search.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const q=search.value.trim().toLowerCase();
+    const m=NODES.find(n=>!n.hidden && n.label.toLowerCase().includes(q));
+    if(m) select(m);
+  }
+});
+
+/* ---------------- misc ---------------- */
+document.getElementById("reset").onclick=()=>{
+  search.value=""; selected=null; toggleTrace(false,true);
+  active.clear(); groupKeys.forEach(k=>active.add(k));
+  document.querySelectorAll(".leg").forEach(el=>el.classList.remove("off"));
+  NODES.forEach(n=>n.hidden=false); clearFx(); panel.classList.remove("open");
+  updateCounts(); reheat(0.6); setTimeout(fit,350);
+};
+document.getElementById("menuBtn").onclick=()=>document.getElementById("rail").classList.toggle("collapsed");
+
+/* ---------------- live update: GOV.UK Search API ---------------- */
+const ORGS=["department-for-science-innovation-and-technology","ministry-of-defence",
+  "government-digital-service","department-for-energy-security-and-net-zero",
+  "medicines-and-healthcare-products-regulatory-agency","competition-and-markets-authority"];
+const sheetWrap=document.getElementById("sheetWrap");
+const statusEl=document.getElementById("status"), resultsEl=document.getElementById("results");
+const addedPaths=new Set();
+const existingPaths=new Set();
+NODES.forEach(n=>n.links&&n.links.forEach(([,u])=>{ try{ existingPaths.add(new URL(u).pathname.replace(/\/$/,"")); }catch(e){} }));
+
+function openSheet(){ sheetWrap.classList.add("open"); setTimeout(()=>document.getElementById("q").focus(),30); }
+function closeSheet(){ sheetWrap.classList.remove("open"); }
+document.getElementById("updateBtn").onclick=openSheet;
+document.getElementById("sheetX").onclick=closeSheet;
+sheetWrap.addEventListener("click",e=>{ if(e.target===sheetWrap) closeSheet(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+
+function apiURL(){
+  const q=encodeURIComponent(document.getElementById("q").value.trim()||"artificial intelligence");
+  const since=document.getElementById("since").value;
+  let u="https://www.gov.uk/api/search.json?q="+q+"&order=-public_timestamp&count=80"
+    +"&fields=title&fields=link&fields=public_timestamp&fields=description&fields=organisations";
+  ORGS.forEach(o=>u+="&filter_organisations="+o);
+  if(since!=="0"){ const d=new Date(); d.setMonth(d.getMonth()-parseInt(since,10));
+    u+="&filter_public_timestamp=from:"+d.toISOString().slice(0,10); }
+  return u;
+}
+function withProxy(u){ const p=document.getElementById("proxy").value.trim();
+  if(!p) return u; return p.includes("{url}")?p.replace("{url}",encodeURIComponent(u)):p+u; }
+function fmtDate(s){ if(!s) return ""; const d=new Date(s); if(isNaN(d)) return "";
+  return d.toLocaleDateString("en-GB",{month:"short",year:"numeric"}); }
+function shorten(t){ t=(t||"").trim(); return t.length>52?t.slice(0,50)+"\u2026":t; }
+function orgOf(r){ const o=r.organisations&&r.organisations[0];
+  return o?(typeof o==="string"?o:(o.title||o.slug||"GOV.UK")):"GOV.UK"; }
+
+async function runSearch(){
+  resultsEl.innerHTML=""; statusEl.className="sheet-status"; statusEl.textContent="Searching GOV.UK\u2026";
+  let data;
+  try{
+    const res=await fetch(withProxy(apiURL()),{headers:{Accept:"application/json"}});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    data=await res.json();
+  }catch(err){
+    statusEl.className="sheet-status err";
+    statusEl.innerHTML="Couldn\u2019t reach the API directly \u2014 usually browser CORS. The saved map is unaffected. "
+      +"Options: paste your own CORS proxy above (e.g. a free Cloudflare Worker), or use the scheduled GitHub Action for hands-off updates. "
+      +"<span class='mono'>("+escapeHTML(err.message)+")</span>";
+    return;
+  }
+  const all=data.results||[];
+  if(!all.length){ statusEl.textContent="No results for that query."; return; }
+  const fresh=all.filter(r=>{
+    const link=r.link||""; const full=link.startsWith("http")?link:("https://www.gov.uk"+link);
+    let path; try{ path=new URL(full).pathname.replace(/\/$/,""); }catch(e){ return false; }
+    r._full=full; r._path=path;
+    return !existingPaths.has(path) && !addedPaths.has(path);
+  });
+  statusEl.textContent=all.length+" returned \u00b7 "+fresh.length+" not already on the map.";
+  if(!fresh.length){ resultsEl.innerHTML="<div class='sheet-note' style='border:none;margin:0;padding:0'>Everything returned is already represented. Try a wider window or a different term.</div>"; return; }
+  fresh.slice(0,40).forEach(r=>{
+    const org=orgOf(r);
+    const div=document.createElement("div"); div.className="cand";
+    div.innerHTML="<h4>"+escapeHTML(r.title||"(untitled)")+"</h4>"
+      +"<div class='m mono'>"+escapeHTML(org)+(r.public_timestamp?" \u00b7 "+fmtDate(r.public_timestamp):"")+"</div>"
+      +"<div class='row'><a href='"+r._full+"' target='_blank' rel='noopener'>Open source \u2197</a>"
+      +"<button class='add'>+ Add to map</button></div>";
+    const btn=div.querySelector(".add");
+    btn.onclick=()=>{ addFound(r,org); btn.classList.add("done"); btn.textContent="\u2713 Added"; btn.disabled=true; };
+    resultsEl.appendChild(div);
+  });
+}
+document.getElementById("go").onclick=runSearch;
+document.getElementById("q").addEventListener("keydown",e=>{ if(e.key==="Enter") runSearch(); });
+
+function addFound(r,org){
+  if(addedPaths.has(r._path)) return; addedPaths.add(r._path);
+  const id="found:"+r._path;
+  const n={id,label:shorten(r.title),group:"found",type:"doc",
+    desc:(r.description||"Newly discovered via the GOV.UK Search API \u2014 not yet placed in the map\u2019s relationships."),
+    links:[[org||"GOV.UK source",r._full]], date:fmtDate(r.public_timestamp), isNew:true, deg:0,
+    x:cx+(Math.random()-.5)*140, y:cy+(Math.random()-.5)*140, vx:0, vy:0, fixed:false, hidden:!active.has("found")};
+  byId[id]=n; NODES.push(n); buildNode(n);
+  refreshCounts(); reheat(0.6); setTimeout(()=>select(n),60);
+}
+function refreshCounts(){
+  const c={}; NODES.forEach(n=>c[n.group]=(c[n.group]||0)+1);
+  document.querySelectorAll(".leg").forEach(el=>{ const ct=el.querySelector(".ct"); if(ct) ct.textContent=c[el.dataset.k]||0; });
+  updateCounts();
+}
+
+/* ---------------- intro prompt (toast) ---------------- */
+const toast=document.getElementById("toast");
+document.getElementById("toastGo").onclick=()=>{ toast.classList.remove("show"); openSheet(); };
+document.getElementById("toastX").onclick=()=>toast.classList.remove("show");
+if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
+  setTimeout(()=>toast.classList.add("show"),1300);
+  setTimeout(()=>toast.classList.remove("show"),9500);
+}
+
+window.addEventListener("resize",()=>{
+  W=svg.clientWidth; H=svg.clientHeight; cx=W/2; cy=H/2; reheat(0.2);
+});
+</script>
+</body>
+</html>
