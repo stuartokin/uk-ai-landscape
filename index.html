@@ -17,7 +17,7 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; background:var(--ink); color:var(--text);
+    margin:0; height:100vh; height:100dvh; background:var(--ink); color:var(--text);
     font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     -webkit-font-smoothing:antialiased; overflow:hidden;
   }
@@ -31,21 +31,18 @@
       linear-gradient(transparent 95%, rgba(120,150,170,.05) 95%) 0 0/26px 26px,
       linear-gradient(90deg, transparent 95%, rgba(120,150,170,.05) 95%) 0 0/26px 26px;
   }
-  .app{position:relative; z-index:1; height:100%; display:grid;
-    grid-template-columns:300px 1fr; grid-template-rows:auto 1fr auto;
-    grid-template-areas:"head head" "rail stage" "foot foot";}
+  .app{position:relative; z-index:1; height:100vh; height:100dvh; display:flex; flex-direction:column;}
+  .mid{flex:1 1 auto; display:flex; min-height:0;}
+  .app.rail-hidden .rail{display:none}
   /* ---------- header ---------- */
-  header{grid-area:head; padding:16px 22px 14px; border-bottom:1px solid var(--line);
-    display:flex; align-items:flex-end; justify-content:space-between; gap:18px;
+  header{flex:0 0 auto; padding:8px 20px; border-bottom:1px solid var(--line);
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; justify-content:center; text-align:center;
     background:linear-gradient(180deg,var(--ink2),transparent);}
-  .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--faint)}
-  h1{margin:3px 0 0; font-size:23px; font-weight:800; letter-spacing:-.01em; line-height:1.05}
+  .eyebrow{font-size:10.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--faint)}
+  h1{margin:0; font-size:17px; font-weight:800; letter-spacing:-.01em; line-height:1.05}
   h1 b{color:var(--cyan); font-weight:800}
-  .lede{margin-top:5px; font-size:12.5px; color:var(--dim); max-width:60ch}
-  .credit{text-align:right; font-size:11px; color:var(--faint); line-height:1.5; white-space:nowrap}
-  .credit b{color:var(--dim); font-weight:600}
   /* ---------- rail ---------- */
-  .rail{grid-area:rail; border-right:1px solid var(--line); padding:16px 16px 14px;
+  .rail{flex:0 0 300px; border-right:1px solid var(--line); padding:16px 16px 14px;
     overflow:auto; background:linear-gradient(180deg,var(--panel2),transparent 60%);}
   .rail h2{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint);
     margin:0 0 9px; font-weight:600}
@@ -76,13 +73,10 @@
   .reset:hover{border-color:var(--cyan); color:var(--text)}
   .hint{margin-top:14px; font-size:10.5px; color:var(--faint); line-height:1.6}
   /* ---------- footer / disclaimers ---------- */
-  .foot{grid-area:foot; border-top:1px solid var(--line);
+  .foot{flex:0 0 auto; border-top:1px solid var(--line);
     background:linear-gradient(180deg,transparent,var(--ink2));
-    display:flex; flex-wrap:wrap; gap:5px 20px; justify-content:space-between; align-items:center;
-    padding:9px 22px; font-size:11px; color:var(--faint); line-height:1.45}
+    padding:7px 14px; font-size:10.5px; color:var(--faint); line-height:1.5; text-align:center;}
   .foot b{color:var(--dim); font-weight:600}
-  .foot .warn{color:#F59E0B; font-weight:700; margin-right:5px}
-  .foot-l{max-width:70ch}
   /* ---------- live update: button, found nodes, modal, toast ---------- */
   .update{width:100%; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
     background:linear-gradient(180deg,rgba(94,234,212,.12),rgba(94,234,212,.04));
@@ -132,7 +126,7 @@
   .toast button.go{background:var(--cyan); color:#04181a; border:none; font-weight:700}
   .toast button:hover{color:#fff}
   /* ---------- stage ---------- */
-  .stage{grid-area:stage; position:relative; overflow:hidden}
+  .stage{flex:1 1 auto; min-width:0; position:relative; overflow:hidden}
   svg#net{width:100%; height:100%; display:block; cursor:grab; touch-action:none}
   svg#net.grab{cursor:grabbing}
   .link{stroke:var(--line2); stroke-width:1; opacity:.5; transition:opacity .2s, stroke .2s}
@@ -162,6 +156,10 @@
   .zoom button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);
     background:rgba(12,20,27,.8); color:var(--dim); font-size:17px; cursor:pointer; backdrop-filter:blur(6px)}
   .zoom button:hover{border-color:var(--cyan); color:#fff}
+  .rail-toggle{position:absolute; top:12px; left:12px; z-index:9; display:flex; align-items:center; gap:6px;
+    background:rgba(12,20,27,.85); border:1px solid var(--line2); color:var(--dim);
+    border-radius:9px; padding:7px 11px; font-size:12px; font-weight:600; cursor:pointer; backdrop-filter:blur(6px)}
+  .rail-toggle:hover{border-color:var(--cyan); color:#fff}
   /* ---------- detail panel ---------- */
   .panel{position:absolute; top:14px; right:14px; width:330px; max-height:calc(100% - 28px);
     background:rgba(16,26,35,.93); border:1px solid var(--line2); border-radius:14px;
@@ -194,20 +192,24 @@
   .rel .nm{color:var(--text)}
   .rel .arr{color:var(--faint)}
   .rel .nm .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .assess{background:var(--ink2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:15px}
+  .assess .len{font-size:11.5px; color:var(--text); margin-bottom:6px}
+  .assess .lab{display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--dim); margin:5px 0}
+  .assess .pips{display:inline-flex; gap:3px}
+  .pip{width:9px; height:9px; border-radius:2px; background:#26333f; display:inline-block}
+  .pip.exec.on{background:var(--cyan)}
+  .pip.tech.on{background:#A78BFA}
+  .assess .cap{font-size:9.5px; color:var(--faint); margin-top:7px; line-height:1.45}
   /* mobile menu toggle */
   .menu-btn{display:none}
   @media (max-width:820px){
-    .app{grid-template-columns:1fr; grid-template-rows:auto auto 1fr auto;
-      grid-template-areas:"head" "rail" "stage" "foot";}
-    .rail{max-height:42vh; border-right:none; border-bottom:1px solid var(--line)}
+    .mid{flex-direction:column;}
+    .rail{flex:0 0 auto; max-height:40vh; border-right:none; border-bottom:1px solid var(--line)}
+    .stage{flex:1 1 auto; min-height:240px}
     .foot{padding:8px 14px; font-size:10px}
-    .rail.collapsed{display:none}
     .panel{left:10px; right:10px; width:auto; top:auto; bottom:10px; max-height:62%}
     .panel{transform:translateY(118%)}
     .panel.open{transform:none}
-    .credit{display:none}
-    .menu-btn{display:inline-flex; align-items:center; gap:7px; background:var(--ink2);
-      border:1px solid var(--line2); color:var(--dim); border-radius:8px; padding:7px 11px; font-size:12px; cursor:pointer}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -215,18 +217,11 @@
 <body>
 <div class="app">
   <header>
-    <div>
-      <div class="eyebrow mono">UK AI Governance · connections map</div>
-      <h1>Who owns what, and <b>what flows where</b></h1>
-      <div class="lede">Departments, regulators, codes and laws — and the lines between them. Click any node to light up its connections and open the official source.</div>
-    </div>
-    <div class="credit">
-      <b>Stuart Okin</b><br>Director, Cyber Regulation &amp; Emerging Technologies, Ofgem<br>
-      <span class="mono">Sources: official only · June 2026</span>
-      <div style="margin-top:8px"><button class="menu-btn" id="menuBtn">Filters</button></div>
-    </div>
+    <h1>UK AI document finder</h1>
+    <div class="eyebrow mono">Official sources · interactive map</div>
   </header>
 
+  <div class="mid">
   <aside class="rail" id="rail">
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -255,6 +250,7 @@
     <svg id="net"><g id="view">
       <g id="links"></g><g id="edgelabels"></g><g id="nodes"></g>
     </g></svg>
+    <button class="rail-toggle" id="railToggle">&#x2039; Filters</button>
     <div class="toast" id="toast">
       <span>Loaded from saved data. <b>Check GOV.UK</b> for newer sources?</span>
       <button class="go" id="toastGo">Check now</button>
@@ -270,10 +266,10 @@
       <div id="panelBody"></div>
     </div>
   </section>
+  </div>
 
   <footer class="foot">
-    <div class="foot-l"><span class="warn">▲</span> AI-generated reference — may be incomplete or contain errors. Always check the linked official sources before relying on anything here.</div>
-    <div class="foot-r">Compiled by <b>Stuart Okin</b> in a personal capacity. Views are his own and not those of Ofgem. · <span class="mono">June 2026</span></div>
+    AI-generated — may contain errors; always verify. <b>Stuart Okin</b> in personal capacity - 20 June 2026
   </footer>
 </div>
 
@@ -343,7 +339,7 @@ const NODES = [
   N("aisi","AI Security Institute (AISI)","frontier","body","DSIT directorate; evaluates frontier models for the most serious security risks (CBRN, cyber, autonomy).",[["AISI","https://www.aisi.gov.uk/about"],["Research agenda","https://www.aisi.gov.uk/research-agenda"],["Frontier AI Trends Report","https://www.aisi.gov.uk/frontier-ai-trends-report"]]),
   N("intlreport","International AI Safety Report","frontier","doc","UK-commissioned, Bengio-chaired synthesis of the science on general-purpose AI risk; secretariat in AISI.",[["Report","https://internationalaisafetyreport.org"]]),
   N("summits","AI Summit series","frontier","event","Bletchley (2023) → Seoul → Paris → India → Switzerland. UK originated the series and safety-institute network.",[["Bletchley Summit","https://www.gov.uk/government/topical-events/ai-safety-summit-2023"]]),
-  N("lasr","LASR","frontier","body","Laboratory for AI Security Research — joint NCSC / AISI / MoD / academia.",[["LASR announcement","https://www.gov.uk/government/news/uk-launches-ai-research-lab-to-boost-britains-cyber-defence"]]),
+  N("lasr","LASR","frontier","body","Laboratory for AI Security Research — joint NCSC / AISI / MoD / academia.",[["LASR (Alan Turing Institute)","https://www.turing.ac.uk/research/research-projects/laboratory-ai-security-research-lasr"]]),
   // defence
   N("mod","Ministry of Defence","defence","dept","Operational military AI, run through the Defence AI Centre.",[["MoD","https://www.gov.uk/government/organisations/ministry-of-defence"]]),
   N("defstrat","Defence AI Strategy","defence","doc","MoD vision to be the most effective, trusted defence organisation of its size on AI.",[["Strategy","https://www.gov.uk/government/publications/defence-artificial-intelligence-strategy"]],"2022"),
@@ -361,9 +357,9 @@ const NODES = [
   N("cma","CMA","regulators","body","Competition in foundation-model markets; six AI principles; powers via the DMCC Act 2024.",[["AI Foundation Models","https://www.gov.uk/cma-cases/ai-foundation-models-initial-review"]]),
   N("ofcom","Ofcom","regulators","body","AI in online services and networks (Online Safety Act; Telecoms Security Act).",[["Strategic approach to AI","https://www.ofcom.org.uk/about-ofcom/annual-reports-and-plans/ofcoms-strategic-approach-to-ai"]]),
   N("fca","FCA","regulators","body","AI in financial services via the AI Lab, Live Testing and the Supercharged Sandbox.",[["FCA AI Lab","https://www.fca.org.uk/firms/innovation/ai-lab"]]),
-  N("boe","Bank of England / PRA","regulators","body","Financial-stability lens; joint AI strategy and PRA SS1/23 model-risk expectations.",[["Bank of England — AI","https://www.bankofengland.co.uk/artificial-intelligence"]]),
+  N("boe","Bank of England / PRA","regulators","body","Financial-stability lens; joint AI strategy and PRA SS1/23 model-risk expectations.",[["Bank of England — AI","https://www.bankofengland.co.uk/research/fintech/artificial-intelligence-consortium"]]),
   N("mhra","MHRA","regulators","body","AI as a medical device (AIaMD) and the 'AI Airlock' sandbox.",[["Software & AI as a medical device","https://www.gov.uk/government/collections/software-and-artificial-intelligence-ai-as-a-medical-device"]]),
-  N("ofgem","Ofgem","energy","body","Energy-sector AI / CNI lead. Strategic approach (2024) → sector guidance (2025) → AI Technical Sandbox & AI Reg Lab (2025–26), with a possible statutory AI duty ahead. Contact: AIPolicy@ofgem.gov.uk.",[["Strategic approach to AI","https://www.ofgem.gov.uk/publications/ofgems-strategic-approach-ai"],["Energy-sector AI guidance","https://www.ofgem.gov.uk/consultation/artificial-intelligence-ai-energy-sector-guidance-consultation"],["AI Technical Sandbox","https://www.ofgem.gov.uk/call-for-input/call-input-ai-technical-sandbox"]]),
+  N("ofgem","Ofgem","energy","body","Energy-sector AI / CNI lead. Strategic approach (2024) → sector guidance (2025) → AI Technical Sandbox & AI Reg Lab (2025–26), with a possible statutory AI duty ahead. Contact: AIPolicy@ofgem.gov.uk.",[["Strategic approach to AI","https://www.ofgem.gov.uk/sites/default/files/2024-04/Ofgem%27s%20strategic%20approach%20to%20AI%20FINAL%20240430.pdf"],["Energy-sector AI guidance","https://www.ofgem.gov.uk/consultation/artificial-intelligence-ai-energy-sector-guidance-consultation"],["AI Technical Sandbox","https://www.ofgem.gov.uk/consultation/ai-technical-sandbox"]]),
   N("onr","ONR","regulators","body","Office for Nuclear Regulation — regulating AI in the nuclear sector.",[["ONR","https://www.onr.org.uk"]]),
   N("caa","CAA","regulators","body","Civil Aviation Authority — AI & advanced automation in aerospace; CAA AI Sandbox.",[["CAA","https://www.caa.co.uk"]]),
   N("ofqual","Ofqual","regulators","body","AI in qualifications and assessment.",[["Ofqual","https://www.gov.uk/government/organisations/ofqual"]]),
@@ -378,12 +374,12 @@ const NODES = [
   N("assurance","AI assurance ecosystem","public","doc","Introduction to AI Assurance plus the assurance roadmap, fund and NPL's Centre for AI Measurement.",[["Introduction to AI Assurance","https://www.gov.uk/government/publications/introduction-to-ai-assurance"]]),
   N("ethics","Data & AI Ethics Framework","public","doc","Cross-government ethics guidance, refreshed Jan 2026; supported by the AI Knowledge Hub.",[["Data Ethics Framework","https://www.gov.uk/government/publications/data-ethics-framework"],["GDS AI adoption hub","https://roadmap-for-modern-digital-government.campaign.gov.uk/ai/guidance-for-ai-adoption"]],"2026"),
   N("nhsai","NHS AI Lab","public","body","NHS England AI adoption, with the AI and Digital Regulations Service.",[["NHS AI Lab","https://transform.england.nhs.uk/ai-lab/"]]),
-  N("healthcomm","Commission on AI in Healthcare","public","body","National Commission into the Regulation of AI in Healthcare — advises government.",[["National Commission","https://www.gov.uk/government/groups/national-commission-into-the-regulation-of-ai-in-healthcare"]]),
+  N("healthcomm","Commission on AI in Healthcare","public","body","National Commission into the Regulation of AI in Healthcare — advises government.",[["National Commission","https://assets.publishing.service.gov.uk/media/69aad2cdbde9c3f213c8992a/Working_groups_publication_0603.pdf"]]),
   // infrastructure
   N("compute","UK Compute Roadmap","infra","doc","Modern compute ecosystem, prioritised allocation, AI Growth Zones and sovereign capability.",[["Compute Roadmap","https://www.gov.uk/government/publications/uk-compute-roadmap/uk-compute-roadmap"]],"Jul 2025"),
   N("airr","AI Research Resource (AIRR)","infra","programme","Public compute for researchers; a ~20× expansion to 2030.",[["Defined in the Compute Roadmap","https://www.gov.uk/government/publications/uk-compute-roadmap/uk-compute-roadmap"]]),
   N("aigz","AI Growth Zones","infra","programme","Accelerated planning, power and offtake for high-density AI data centres. Intersects the grid.",[["AIGZ delivery (One Year On)","https://www.gov.uk/government/publications/ai-opportunities-action-plan-one-year-on/ai-opportunities-action-plan-one-year-on"]]),
-  N("aiec","AI Energy Council","energy","body","DSIT + DESNZ body aligning compute growth with the grid and clean power.",[["AI Energy Council","https://www.gov.uk/government/groups/ai-energy-council"]]),
+  N("aiec","AI Energy Council","energy","body","DSIT + DESNZ body aligning compute growth with the grid and clean power.",[["AI Energy Council","https://www.gov.uk/government/news/ai-energy-council-to-ensure-uks-energy-infrastructure-ready-for-ai-revolution"]]),
   // standards & research
   N("standardshub","AI Standards Hub","standards","body","DSIT-funded partnership of the Alan Turing Institute, BSI and NPL.",[["AI Standards Hub","https://aistandardshub.org"]]),
   N("turing","Alan Turing Institute","standards","body","National institute for AI/data science; standards, safety and regulatory-capacity research.",[["Turing","https://www.turing.ac.uk"]]),
@@ -453,6 +449,75 @@ LINKS.forEach(l=>{ l.source=byId[l.s]; l.target=byId[l.t]; });
 NODES.forEach(n=>n.deg=0);
 LINKS.forEach(l=>{ l.source.deg++; l.target.deg++; });
 const RAD = n => 6 + Math.min(11, Math.sqrt(n.deg)*3.0) + (n.type==="dept"?2:0) + (n.id==="principles"||n.id==="dsit"?3:0);
+
+/* AI assessment: e=exec relevance (1-5), t=technical depth (1-5), l=approx length, s=expanded summary */
+const META = {
+  dsit:{e:5,t:2,l:"Department (website)",s:"Lead department for AI strategy, regulation, safety and compute. It owns most of the codes and central institutions below, so it is the single best orientation point for the whole landscape."},
+  gds:{e:4,t:3,l:"Body (website)",s:"Drives safe public-sector AI adoption — the AI Playbook, the Algorithmic Transparency Recording Standard and the assurance agenda. It absorbed the Responsible Technology Adoption Unit (ex-CDEI)."},
+  sov:{e:4,t:2,l:"Programme / collection",s:"Up to £500m to invest in and back UK AI capability and strategic points in the stack (including a £100m advance market commitment). Signals where sovereign-capability money is going."},
+  natstrat:{e:5,t:1,l:"~130 pp (PDF)",s:"The UK's first 10-year national AI plan (2021): grow the ecosystem, drive cross-sector adoption, govern AI. Largely visionary and now superseded operationally by the 2025 Action Plan, but it is the policy origin of everything since."},
+  aoap:{e:5,t:2,l:"~50 pp + response",s:"Matt Clifford's 50 recommendations, all accepted: build the compute/talent/data foundations, push hard on adoption, and make Britain an 'AI maker not taker'. This is the central strategy document for current UK AI policy."},
+  oneyear:{e:5,t:1,l:"Web page / ~25 pp",s:"A one-year scorecard against the 50 Action Plan commitments — what has been delivered (public-service tools, AI Growth Zones, the Sovereign AI Unit) and what comes next. Useful for a quick read on momentum."},
+  indstrat:{e:4,t:1,l:"~150 pp (sector plan)",s:"The government's modern Industrial Strategy and its Digital & Technologies sector plan, naming AI a frontier growth sector. Context for where AI sits in UK economic policy."},
+  wp:{e:4,t:3,l:"~90 pp (PDF)",s:"The 2023 white paper that set the UK's principles-based, regulator-led model and the five cross-sectoral AI principles. The reference for why the UK has no single AI Act."},
+  wpresp:{e:4,t:3,l:"~70 pp (PDF)",s:"Government's 2024 consultation response: confirms the approach, funds regulator capability, and gives the first official hint that binding rules will be needed for the most powerful models."},
+  principles:{e:4,t:3,l:"Framework (5 principles)",s:"The five non-statutory principles every UK regulator must 'have regard' to — safety/security, transparency, fairness, accountability, contestability. They are the connective tissue of the entire regime."},
+  regguidance:{e:2,t:4,l:"~30 pp (PDF)",s:"Practical guidance telling regulators how to interpret and apply the five principles inside their statutory remits. More operational than strategic — aimed at regulator teams."},
+  sosletters:{e:3,t:1,l:"Ministerial letters",s:"The February 2024 letters asking named regulators to publish a strategic approach to AI by 30 April 2024 — the trigger for the sector-by-sector responses you see across the regulators."},
+  growthlab:{e:5,t:3,l:"Web page (consultation)",s:"The current direction of travel: cross-economy regulatory sandboxes ('AI Growth Lab') where specific rules are relaxed under licence, in place of a near-term AI Bill. High relevance — it is where UK AI regulation is heading."},
+  aibill:{e:3,t:2,l:"~15 pp (bill text)",s:"Lord Holmes' Private Member's Bill proposing a statutory AI authority. Not government legislation, but a useful marker of parliamentary appetite for harder rules."},
+  duaa:{e:4,t:4,l:"Act of Parliament (long)",s:"The most consequential AI-relevant statute: reforms the automated-decision-making rules, triggers a statutory ICO AI code, and mandated the copyright report. Matters at both board and implementation level."},
+  copyright:{e:4,t:3,l:"Report + impact assessment",s:"Government's response on AI and copyright / text-and-data-mining — it declines a broad exception and commissions further work. Key reading for anyone training or licensing models."},
+  aisi:{e:4,t:5,l:"Research body (website)",s:"The state's frontier-risk science arm: pre-deployment evaluations of advanced models for CBRN, cyber, fraud and loss-of-control risks, plus the Inspect framework. Deeply technical, but exec-relevant for risk posture."},
+  intlreport:{e:4,t:4,l:"~300 pp (PDF)",s:"The Bengio-chaired, UK-commissioned synthesis of the evidence on general-purpose AI risk, backed by 30 countries. The authoritative reference on what is actually known about frontier risk."},
+  summits:{e:4,t:2,l:"Event series",s:"The UK-originated summit chain — Bletchley, Seoul, Paris, India — and the global network of safety/security institutes it spawned. Diplomatic and strategic more than technical."},
+  lasr:{e:2,t:5,l:"Lab / partnership",s:"The Laboratory for AI Security Research — a joint NCSC/AISI/MoD/academia lab studying security to and from AI. Specialist research, directly relevant to CNI cyber resilience."},
+  mod:{e:2,t:2,l:"Department (website)",s:"The Ministry of Defence, delivering operational military AI principally through the Defence AI Centre."},
+  defstrat:{e:3,t:3,l:"~70 pp (PDF)",s:"The 2022 Defence AI Strategy — vision, ethics and capability ambitions for AI across UK defence."},
+  ambitious:{e:2,t:2,l:"~20 pp (PDF)",s:"The MoD's five ethical principles for AI-enabled capability: human-centricity, responsibility, understanding, bias/harm mitigation and reliability."},
+  defplaybook:{e:2,t:3,l:"~40 pp (PDF)",s:"Practical defence AI use-cases and delivery patterns from the Defence AI Centre."},
+  putdef:{e:3,t:2,l:"Web page / report",s:"A 2026 taskforce paper sharpening defence's operational AI posture — planning, uncrewed systems and adversary-AI tracking, drawing on lessons from Ukraine."},
+  ncsc:{e:3,t:5,l:"Body (website)",s:"The National Cyber Security Centre — owner of the UK's secure-AI guidance and co-founder of LASR. Your primary counterpart on AI cyber security."},
+  ncscguide:{e:3,t:5,l:"~20 pp (web/PDF)",s:"The global anchor standard for secure AI development across the lifecycle (design → operation), endorsed by agencies in 18+ countries. Essential technical reference for securing AI systems."},
+  aicode:{e:3,t:5,l:"Code (~13 principles)",s:"DSIT's voluntary lifecycle code for the AI supply chain, built on the NCSC guidelines and the basis for the ETSI standard. Directly relevant to OT/CNI AI security."},
+  swcode:{e:3,t:4,l:"Code (~14 principles)",s:"The companion software-security code; the AI code sits as an addendum to it. Baseline secure-development expectations for vendors."},
+  etsi:{e:2,t:5,l:"Technical specification",s:"The UK code turned into a formal ETSI technical specification — the first global baseline AI-security standard spanning the lifecycle. Highly technical: the implementable form of the policy."},
+  ico:{e:4,t:4,l:"Guidance hub (website)",s:"Lead regulator where AI touches personal data: AI & data-protection guidance, the AI auditing toolkit, the AI & biometrics strategy and a forthcoming statutory AI/ADM code."},
+  cma:{e:4,t:3,l:"Reports (website)",s:"Competition watchdog for foundation-model markets — six AI principles and powers under the Digital Markets, Competition and Consumers Act 2024 over the largest players."},
+  ofcom:{e:3,t:3,l:"Strategy (website)",s:"Regulates AI in online services and networks via the Online Safety Act and Telecoms Security Act, plus its published strategic approach to AI."},
+  fca:{e:4,t:3,l:"Web hub",s:"Financial-services AI through the AI Lab, AI Live Testing and the Supercharged Sandbox; the Consumer Duty applies to AI-driven products."},
+  boe:{e:3,t:4,l:"Web hub",s:"Financial-stability lens via the Bank of England / PRA AI Consortium and the PRA's SS1/23 model-risk-management expectations."},
+  mhra:{e:3,t:4,l:"Collection (website)",s:"Regulates AI as a medical device (AIaMD) and runs the 'AI Airlock' regulatory sandbox."},
+  ofgem:{e:5,t:4,l:"Strategy + guidance + sandbox",s:"Energy-sector AI / CNI lead: relies on existing law plus supplemental guidance and tools, applying the five principles plus environmental sustainability. It runs a standing AI Policy function, the AI Reg Lab and a 2026 AI Technical Sandbox pilot, with a possible statutory AI duty ahead. Most directly relevant to your remit."},
+  onr:{e:3,t:4,l:"Web hub",s:"The nuclear regulator's approach to AI in safety cases and site security."},
+  caa:{e:3,t:4,l:"Strategy + sandbox",s:"The aviation regulator's strategy for AI and advanced automation, with a CAA AI sandbox."},
+  ofqual:{e:2,t:2,l:"Web hub",s:"Approach to AI in qualifications and assessment."},
+  ofsted:{e:2,t:2,l:"Web hub",s:"Approach to AI across the education settings it inspects."},
+  ehrc:{e:3,t:2,l:"Web hub",s:"AI, equality and the public-sector equality duty — focused on algorithmic discrimination risks."},
+  ofwat:{e:2,t:2,l:"Web hub",s:"The water regulator's emerging position on AI."},
+  drcf:{e:4,t:3,l:"Forum (website)",s:"The coordination layer across ICO, CMA, Ofcom and FCA — the AI & Digital Hub and joint cross-regulator AI work."},
+  playbook:{e:4,t:3,l:"~120 pp (PDF)",s:"Ten principles plus practical guidance for safe, effective public-sector AI use — procurement, assurance and risk. The working handbook for departments and arm's-length bodies."},
+  genai:{e:3,t:3,l:"~70 pp (withdrawn)",s:"The earlier cross-government generative-AI framework, now superseded by the AI Playbook (the page is kept as a withdrawn record)."},
+  atrs:{e:3,t:3,l:"Standard + records",s:"The mandatory transparency register for algorithmic tools used in central-government decisions."},
+  assurance:{e:3,t:4,l:"Guidance + ecosystem",s:"The anchor for the UK's AI-assurance market: AI Management Essentials, the assurance roadmap and fund, and NPL's Centre for AI Measurement."},
+  ethics:{e:3,t:3,l:"Framework",s:"Cross-government data-and-AI ethics guidance, refreshed in 2026 and supported by the AI Knowledge Hub and a Responsible AI Advisory Panel."},
+  nhsai:{e:3,t:3,l:"Web hub",s:"NHS England's AI adoption programme, alongside the AI & Digital Regulations Service."},
+  healthcomm:{e:3,t:2,l:"Working-group doc",s:"The MHRA-established National Commission shaping a new regulatory framework for AI in healthcare; the linked document lists its working-group membership."},
+  compute:{e:5,t:3,l:"~60 pp (web/PDF)",s:"The plan for UK compute: public AI Research Resource expansion, prioritised allocation, AI Growth Zones and sovereign capability. Where compute, energy and growth intersect."},
+  airr:{e:3,t:3,l:"Programme",s:"Public compute for researchers, expanding roughly 20-fold to 2030 (defined within the Compute Roadmap)."},
+  aigz:{e:5,t:3,l:"Programme / announcement",s:"Accelerated planning, power and grid offtake for high-density AI data centres — directly intersecting energy connections and resilience. High relevance to your world."},
+  aiec:{e:5,t:2,l:"Council / announcement",s:"The DSIT + DESNZ council aligning compute growth with the grid and clean power; members include Ofgem, NESO and National Grid. Squarely in the energy/AI overlap."},
+  standardshub:{e:3,t:4,l:"Body / portal",s:"A Turing + BSI + NPL partnership advancing trustworthy-AI technical standards as governance tools."},
+  turing:{e:3,t:4,l:"Institute (website)",s:"The national institute for AI and data science — standards, safety and regulatory-capacity research; hosts the LASR work."},
+  ukri:{e:3,t:3,l:"Funder (website)",s:"Research funder behind the AI hubs, BridgeAI adoption support, the Manchester Prize and a new £40m Fundamental AI Research Lab."},
+  raiuk:{e:2,t:4,l:"Programme",s:"The UKRI-funded national programme on responsible and trustworthy AI research (RAi UK / BRAID)."},
+  npl:{e:2,t:5,l:"Institute",s:"Measurement science for AI — hosts the Centre for AI Measurement covering testing, verification and validation."},
+  npsa:{e:3,t:4,l:"Body (website)",s:"The protective-security authority for where AI meets physical and personnel security of critical infrastructure."},
+  bsi:{e:2,t:4,l:"Standards body",s:"The UK national standards body and an AI Standards Hub partner."},
+  neso:{e:4,t:3,l:"Body (website)",s:"The National Energy System Operator — grid operation, connections reform and resilience; a key Ofgem counterpart on the AI/grid question."},
+  desnz:{e:4,t:2,l:"Department (website)",s:"The Department for Energy Security & Net Zero — energy policy, clean power and, with DSIT, the AI Energy Council."},
+};
+NODES.forEach(n=>{ const m=META[n.id]; if(m){ n.exec=m.e; n.tech=m.t; n.len=m.l; if(m.s) n.desc=m.s; } });
 
 const NS="http://www.w3.org/2000/svg";
 const svg=document.getElementById("net"), gView=document.getElementById("view");
@@ -649,8 +714,18 @@ document.getElementById("panelX").onclick=closePanel;
 function escapeHTML(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 const TYPELABEL={dept:"Department",body:"Body",doc:"Document",law:"Law / standard",
   framework:"Framework",programme:"Programme",forum:"Forum",event:"Event series"};
+function meter(v,cls){ v=Math.max(0,Math.min(5,Math.round(v||0))); let s=""; for(let i=1;i<=5;i++) s+='<span class="pip '+cls+(i<=v?' on':'')+'"></span>'; return s; }
 function openPanel(n,rels){
   const g=GROUPS[n.group];
+  const hasScore=(n.exec!=null||n.tech!=null);
+  const assessHtml='<div class="assess">'
+    +(n.len?'<div class="len">Length: <b>'+escapeHTML(String(n.len))+'</b></div>':'')
+    +(hasScore
+      ?'<div class="lab"><span>Exec relevance</span><span class="pips">'+meter(n.exec,'exec')+'</span></div>'
+       +'<div class="lab"><span>Technical depth</span><span class="pips">'+meter(n.tech,'tech')+'</span></div>'
+       +'<div class="cap">AI assessment \u2014 approximate and may be wrong; page lengths are estimates.</div>'
+      :'<div class="cap">Newly found this session \u2014 not yet assessed.</div>')
+    +'</div>';
   const linkHtml=n.links.map(([lab,url])=>`<a href="${url}" target="_blank" rel="noopener">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14 21 3"/><path d="M21 9V3h-6"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
     <span>${escapeHTML(lab)}</span></a>`).join("");
@@ -667,6 +742,7 @@ function openPanel(n,rels){
     <h3 class="p-title">${escapeHTML(n.label)}</h3>
     <div class="p-meta mono">${n.date?escapeHTML(n.date)+" · ":""}${rels.length} connection${rels.length!==1?"s":""}</div>
     <p class="p-desc">${escapeHTML(n.desc)}</p>
+    ${assessHtml}
     <p class="p-sec">Official source${n.links.length>1?"s":""}</p>
     <div class="p-links">${linkHtml}</div>
     <p class="p-sec">Connections</p>
@@ -764,7 +840,13 @@ document.getElementById("reset").onclick=()=>{
   NODES.forEach(n=>n.hidden=false); clearFx(); panel.classList.remove("open");
   updateCounts(); reheat(0.6); setTimeout(fit,350);
 };
-document.getElementById("menuBtn").onclick=()=>document.getElementById("rail").classList.toggle("collapsed");
+const appEl=document.querySelector(".app"), railToggle=document.getElementById("railToggle");
+function setRail(hidden){
+  appEl.classList.toggle("rail-hidden",hidden);
+  railToggle.innerHTML = hidden ? "&#x2630; Filters" : "&#x2039; Filters";
+  setTimeout(()=>{ W=svg.clientWidth; H=svg.clientHeight; cx=W/2; cy=H/2; reheat(0.25); fit(); },320);
+}
+railToggle.onclick=()=> setRail(!appEl.classList.contains("rail-hidden"));
 
 /* ---------------- live update: GOV.UK Search API ---------------- */
 const ORGS=["department-for-science-innovation-and-technology","ministry-of-defence",
@@ -845,7 +927,7 @@ function addFound(r,org){
   const id="found:"+r._path;
   const n={id,label:shorten(r.title),group:"found",type:"doc",
     desc:(r.description||"Newly discovered via the GOV.UK Search API \u2014 not yet placed in the map\u2019s relationships."),
-    links:[[org||"GOV.UK source",r._full]], date:fmtDate(r.public_timestamp), isNew:true, deg:0,
+    links:[[org||"GOV.UK source",r._full]], date:fmtDate(r.public_timestamp), isNew:true, deg:0, len:"GOV.UK \u00b7 newly found",
     x:cx+(Math.random()-.5)*140, y:cy+(Math.random()-.5)*140, vx:0, vy:0, fixed:false, hidden:!active.has("found")};
   byId[id]=n; NODES.push(n); buildNode(n);
   refreshCounts(); reheat(0.6); setTimeout(()=>select(n),60);
