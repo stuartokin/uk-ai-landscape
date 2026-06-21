@@ -58,13 +58,6 @@
     border-radius:9px; padding:9px 11px 9px 32px; font-size:13px; outline:none}
   .search input:focus{border-color:var(--cyan); box-shadow:0 0 0 3px rgba(94,234,212,.12)}
   .search svg{position:absolute; left:10px; top:9px; width:15px; height:15px; stroke:var(--faint)}
-  .trace{width:100%; display:flex; align-items:center; gap:9px; cursor:pointer;
-    background:linear-gradient(180deg,rgba(244,114,182,.12),rgba(244,114,182,.05));
-    border:1px solid rgba(244,114,182,.35); color:#ffd7e6; border-radius:10px;
-    padding:10px 12px; font-size:12.5px; font-weight:600; margin-bottom:18px; transition:.15s}
-  .trace:hover{border-color:var(--g-energy); background:rgba(244,114,182,.18)}
-  .trace.on{background:rgba(244,114,182,.22); border-color:var(--g-energy); box-shadow:0 0 0 3px rgba(244,114,182,.12)}
-  .trace .dot{width:9px;height:9px;border-radius:50%;background:var(--g-energy);box-shadow:0 0 10px var(--g-energy);flex:0 0 auto}
   .legend{display:flex; flex-direction:column; gap:2px; margin-bottom:16px}
   .leg{display:flex; align-items:center; gap:9px; padding:5px 7px; border-radius:7px; cursor:pointer;
     font-size:12px; color:var(--dim); transition:.12s; user-select:none}
@@ -241,10 +234,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" placeholder="Search bodies & documents…" autocomplete="off">
     </div>
-
-    <button class="trace" id="traceBtn">
-      <span class="dot"></span> Trace Ofgem&rsquo;s world
-    </button>
 
     <button class="update" id="updateBtn">&#x21BB;&nbsp; Check GOV.UK for new sources</button>
 
@@ -752,7 +741,7 @@ function toGraph(e){ const r=svg.getBoundingClientRect();
   return {x:(e.clientX-r.left-ox)/scale, y:(e.clientY-r.top-oy)/scale}; }
 
 /* ---------------- selection / focus ---------------- */
-let selected=null, traceOn=false;
+let selected=null;
 function neighbours(n){
   const set=new Set([n.id]); const rels=[];
   for(const l of LINKS){
@@ -767,7 +756,6 @@ function clearFx(){
 }
 function select(n){
   selected=n;
-  if(traceOn) toggleTrace(false,true);
   clearFx();
   const {set,rels}=neighbours(n);
   NODES.forEach(m=>{ if(!set.has(m.id)) m.el.classList.add("faded"); });
@@ -779,7 +767,7 @@ function select(n){
   openPanel(n,rels); reheat(0.18);
 }
 function hover(n,on){
-  if(selected||traceOn) return;
+  if(selected) return;
   if(on){ const {set}=neighbours(n);
     LINKS.forEach(l=>{ const inv=l.source.id===n.id||l.target.id===n.id;
       if(inv){ l.el.classList.add(l.energy?"hotE":"hot"); l.tx.classList.add("show"); } });
@@ -860,35 +848,6 @@ function openPanel(n,rels){
 function closePanel(){ panel.classList.remove("open"); selected=null; clearFx(); }
 svg.addEventListener("click",e=>{ if(!e.target.closest(".node")){ closePanel(); } });
 
-/* ---------------- trace Ofgem's world ---------------- */
-const traceBtn=document.getElementById("traceBtn");
-function toggleTrace(force,silent){
-  traceOn = force!==undefined?force:!traceOn;
-  traceBtn.classList.toggle("on",traceOn);
-  if(silent) return;
-  clearFx(); selected=null; panel.classList.remove("open");
-  if(!traceOn) return;
-  // BFS 2 hops from Ofgem along energy + direct links
-  const keep=new Set(["ofgem"]); const energyLinks=[];
-  LINKS.forEach(l=>{
-    if(l.source.id==="ofgem"||l.target.id==="ofgem"){
-      keep.add(l.source.id); keep.add(l.target.id); energyLinks.push(l);
-    }
-  });
-  // include energy-flagged links among kept nodes
-  LINKS.forEach(l=>{
-    if(l.energy && (keep.has(l.source.id)||keep.has(l.target.id))){
-      keep.add(l.source.id); keep.add(l.target.id); if(!energyLinks.includes(l)) energyLinks.push(l);
-    }
-  });
-  NODES.forEach(m=>{ if(!keep.has(m.id)) m.el.classList.add("faded"); });
-  byId.ofgem.el.classList.add("sel");
-  energyLinks.forEach(l=>{ l.el.classList.add(l.energy?"hotE":"hot"); l.tx.classList.add("show"); });
-  const {rels}=neighbours(byId.ofgem); openPanel(byId.ofgem,rels);
-  reheat(0.15);
-}
-traceBtn.onclick=()=>toggleTrace();
-
 /* ---------------- legend / filters ---------------- */
 const legend=document.getElementById("legend");
 const counts={}; NODES.forEach(n=>counts[n.group]=(counts[n.group]||0)+1);
@@ -927,8 +886,8 @@ updateCounts();
 const search=document.getElementById("search");
 search.addEventListener("input",()=>{
   const q=search.value.trim().toLowerCase();
-  if(!q){ if(!selected&&!traceOn) clearFx(); return; }
-  if(selected||traceOn){selected=null;traceOn=false;traceBtn.classList.remove("on");panel.classList.remove("open");}
+  if(!q){ if(!selected) clearFx(); return; }
+  if(selected){selected=null;panel.classList.remove("open");}
   clearFx();
   NODES.forEach(n=>{
     const hit=n.label.toLowerCase().includes(q)||n.desc.toLowerCase().includes(q)||GROUPS[n.group].name.toLowerCase().includes(q);
@@ -947,7 +906,7 @@ search.addEventListener("keydown",e=>{
 
 /* ---------------- misc ---------------- */
 document.getElementById("reset").onclick=()=>{
-  search.value=""; selected=null; toggleTrace(false,true);
+  search.value=""; selected=null;
   active.clear(); groupKeys.forEach(k=>active.add(k));
   document.querySelectorAll(".leg").forEach(el=>el.classList.remove("off"));
   NODES.forEach(n=>n.hidden=false); clearFx(); panel.classList.remove("open");
