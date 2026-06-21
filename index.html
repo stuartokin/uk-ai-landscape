@@ -42,6 +42,12 @@
   h1{margin:0; font-size:18px; font-weight:800; letter-spacing:-.01em; line-height:1.1}
   h1 b{color:var(--cyan); font-weight:800}
   .sub{font-size:11.5px; color:var(--dim); letter-spacing:.01em}
+  .maptoggle{display:inline-flex; margin-top:7px; background:var(--ink2); border:1px solid var(--line2);
+    border-radius:9px; padding:3px; gap:3px}
+  .mt-opt{background:transparent; border:none; color:var(--dim); font-size:11.5px; font-weight:600;
+    padding:5px 13px; border-radius:7px; cursor:pointer; letter-spacing:.01em; transition:.15s; font-family:inherit}
+  .mt-opt:hover{color:var(--text)}
+  .mt-opt.active{background:var(--cyan); color:#04181a}
   /* ---------- rail ---------- */
   .rail{flex:0 0 300px; border-right:1px solid var(--line); padding:16px 16px 14px;
     overflow:auto; background:linear-gradient(180deg,var(--panel2),transparent 60%);}
@@ -257,8 +263,12 @@
 <body>
 <div class="app">
   <header>
-    <h1>The UK AI Governance <b>Map</b></h1>
-    <div class="sub">Bodies, regulators, guidance, etc. — and how they connect</div>
+    <h1 id="mapTitle">The UK AI Governance <b>Map</b></h1>
+    <div class="sub" id="mapSub">Bodies, regulators, guidance, etc. — and how they connect</div>
+    <div class="maptoggle" id="mapToggle" role="tablist" aria-label="Choose map">
+      <button class="mt-opt active" data-ds="uk" role="tab" aria-selected="true">UK governance</button>
+      <button class="mt-opt" data-ds="intl" role="tab" aria-selected="false">International standards</button>
+    </div>
   </header>
 
   <div class="mid">
@@ -364,7 +374,7 @@
 
 <script>
 /* ---------------- data: the UK AI governance landscape ---------------- */
-const GROUPS = {
+let GROUPS = {
   strategy:{name:"Strategy & growth", c:"#E3B23C"},
   regulation:{name:"Regulation & law", c:"#A78BFA"},
   central:{name:"Lead dept & central", c:"#38BDF8"},
@@ -381,7 +391,7 @@ const GROUPS = {
 const N = (id,label,group,type,desc,links,date)=>({id,label,group,type,desc,links,date});
 const L = (s,t,rel,energy)=>({s,t,rel,energy:!!energy});
 
-const NODES = [
+let NODES = [
   // central
   N("dsit","DSIT","central","dept","Lead department for AI strategy, regulation, safety and compute.",[["DSIT","https://www.gov.uk/government/organisations/department-for-science-innovation-and-technology"]]),
   N("gds","Government Digital Service","central","body","Drives public-sector AI adoption; owns the AI Playbook, ATRS and assurance work. Absorbed the RTAU (ex-CDEI).",[["GDS","https://www.gov.uk/government/organisations/government-digital-service"]]),
@@ -467,7 +477,7 @@ const NODES = [
   N("ethicalai","Ethical AI Use in the Energy Sector","energy","doc","Ofgem's first good-practice guidance for ethical AI use in Britain's energy sector (May 2025).",[["Guidance page","https://www.ofgem.gov.uk/guidance/ethical-ai-use-energy-sector"],["Guidance (PDF)","https://www.ofgem.gov.uk/sites/default/files/2025-05/ethical-ai-use-in-the-energy-sector-20250516150045.pdf"]]),
 ];
 
-const LINKS = [
+let LINKS = [
   // central ownership
   L("dsit","aisi","hosts"), L("dsit","gds","leads"), L("dsit","sov","runs"),
   L("dsit","natstrat","published"), L("dsit","aoap","published"), L("dsit","wp","published"),
@@ -528,7 +538,7 @@ const LINKS = [
 ];
 
 /* ---------------- build graph ---------------- */
-const byId = Object.fromEntries(NODES.map(n=>[n.id,n]));
+let byId = Object.fromEntries(NODES.map(n=>[n.id,n]));
 LINKS.forEach(l=>{ l.source=byId[l.s]; l.target=byId[l.t]; });
 // degree → radius
 NODES.forEach(n=>n.deg=0);
@@ -536,7 +546,7 @@ LINKS.forEach(l=>{ l.source.deg++; l.target.deg++; });
 const RAD = n => 6 + Math.min(11, Math.sqrt(n.deg)*3.0) + (n.type==="dept"?2:0) + (n.id==="principles"||n.id==="dsit"?3:0);
 
 /* AI assessment: e=exec relevance (1-5), t=technical depth (1-5), l=approx length, s=expanded summary */
-const META = {
+let META = {
   dsit:{e:5,t:2,l:"Department (website)",s:"Lead department for AI strategy, regulation, safety and compute. It owns most of the codes and central institutions below, so it is the single best orientation point for the whole landscape."},
   gds:{e:4,t:3,l:"Body (website)",s:"Drives safe public-sector AI adoption — the AI Playbook, the Algorithmic Transparency Recording Standard and the assurance agenda. It absorbed the Responsible Technology Adoption Unit (ex-CDEI)."},
   sov:{e:4,t:2,l:"Programme / collection",s:"Up to £500m to invest in and back UK AI capability and strategic points in the stack (including a £100m advance market commitment). Signals where sovereign-capability money is going."},
@@ -610,6 +620,120 @@ const META = {
   ethicalai:{e:5,t:4,l:"Guidance (~40 pp PDF)",s:"Ofgem's first dedicated good-practice guidance on ethical AI use in Britain's energy sector (May 2025). Four outcomes — safe, secure, fair, environmentally sustainable — across the AI lifecycle, confirming existing law (REMIT, GDPR, NIS, competition) applies, with governance, risk and competency expectations and a dedicated cyber-security appendix. The central energy-sector AI document for your world."},
 };
 NODES.forEach(n=>{ const m=META[n.id]; if(m){ n.exec=m.e; n.tech=m.t; n.len=m.l; if(m.s) n.desc=m.s; } });
+const DATA_UK={GROUPS,NODES,LINKS,META};
+
+/* ===================== INTERNATIONAL AI STANDARDS DATASET (links verified) ===================== */
+const GROUPS_INTL = {
+  govern:{name:"Governance & management", c:"#38BDF8"},
+  risk:{name:"Risk management", c:"#E3B23C"},
+  legal:{name:"Legal & regulation", c:"#A78BFA"},
+  pubsec:{name:"Public-sector AI rules", c:"#14B8A6"},
+  safesec:{name:"Safety & security", c:"#F59E0B"},
+  tevv:{name:"Testing, evaluation & V&V", c:"#F26D6D"},
+  data:{name:"Data governance & quality", c:"#4ADE80"},
+  ethics:{name:"Ethics & human rights", c:"#F472B6"},
+  coord:{name:"Standards strategy & coordination", c:"#6E8BF0"},
+};
+const NODES_INTL = [
+  // bodies
+  N("iso","ISO/IEC JTC 1/SC 42","coord","body","International subcommittee for the core ISO/IEC AI standards.",[["ISO/IEC JTC 1/SC 42","https://www.iso.org/committee/6794475.html"]]),
+  N("ieee","IEEE Standards Association","coord","body","Global engineering standards body; AI ethics and autonomous-systems standards.",[["IEEE SA","https://standards.ieee.org/"]]),
+  N("nist","NIST (US)","govern","body","US standards agency; author of the AI Risk Management Framework.",[["NIST AI","https://www.nist.gov/artificial-intelligence"]]),
+  N("caisi","NIST CAISI","tevv","body","NIST Center for AI Standards & Innovation (ex-US AI Safety Institute).",[["CAISI","https://www.nist.gov/caisi"]]),
+  N("etsi","ETSI TC SAI","safesec","body","European telecoms standards institute; Technical Committee on Securing AI.",[["ETSI","https://www.etsi.org/"]]),
+  N("cen","CEN-CENELEC JTC 21","coord","body","European committee drafting harmonised AI standards for the EU AI Act.",[["JTC 21","https://jtc21.eu/"]]),
+  N("bsi","BSI (UK)","coord","body","UK national standards body; adopts ISO/IEC AI standards as BS.",[["BSI standards","https://www.bsigroup.com/en-GB/products-and-services/standards/"]]),
+  N("ncsc","NCSC (UK)","safesec","body","UK National Cyber Security Centre — secure-AI guidance and the CAF.",[["NCSC","https://www.ncsc.gov.uk/"]]),
+  N("aihub","AI Standards Hub (UK)","coord","body","Turing + BSI + NPL + DSIT portal mapping global AI standards.",[["AI Standards Hub","https://aistandardshub.org/"]]),
+  N("oecdai","OECD.AI / GPAI","coord","body","The OECD's AI policy observatory and the Global Partnership on AI.",[["OECD.AI","https://oecd.ai/"]]),
+  N("unesco","UNESCO","ethics","body","UN agency; author of the global Recommendation on the Ethics of AI.",[["UNESCO AI","https://www.unesco.org/en/artificial-intelligence"]]),
+  N("euaio","European AI Office","legal","body","European Commission body overseeing the AI Act, especially GPAI models.",[["EU AI Office","https://digital-strategy.ec.europa.eu/en/policies/ai-office"]]),
+  // United States
+  N("nistrmf","NIST AI RMF 1.0","govern","doc","US voluntary framework for managing AI risk across the lifecycle.",[["AI RMF","https://www.nist.gov/itl/ai-risk-management-framework"]]),
+  N("nistgenai","NIST GenAI Profile (AI 600-1)","risk","doc","NIST companion profile for generative-AI risks.",[["NIST AI 600-1","https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf"]]),
+  N("aiactionplan","America's AI Action Plan (2025)","pubsec","doc","US federal AI strategy: innovation, infrastructure, international.",[["AI Action Plan","https://www.whitehouse.gov/wp-content/uploads/2025/07/Americas-AI-Action-Plan.pdf"]]),
+  N("ombai","OMB M-25-21","pubsec","doc","US federal agency policy for AI use, governance and public trust.",[["OMB M-25-21","https://www.whitehouse.gov/wp-content/uploads/2025/02/M-25-21-Accelerating-Federal-Use-of-AI-through-Innovation-Governance-and-Public-Trust.pdf"]]),
+  // EU + treaty law
+  N("euaiact","EU AI Act (Reg 2024/1689)","legal","law","The EU's risk-based AI law — the first comprehensive AI regulation.",[["EUR-Lex text","https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689"],["EC overview","https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai"]]),
+  N("coeconv","CoE Framework Convention on AI","legal","law","Council of Europe treaty aligning AI with human rights, democracy and rule of law.",[["Framework Convention","https://www.coe.int/en/web/artificial-intelligence/the-framework-convention-on-artificial-intelligence"]]),
+  // ISO/IEC family
+  N("iso42001","ISO/IEC 42001 (AI management)","govern","doc","World's first certifiable AI management-system standard.",[["ISO/IEC 42001","https://www.iso.org/standard/42001"]]),
+  N("iso22989","ISO/IEC 22989 (concepts & terminology)","govern","doc","Common AI vocabulary and concepts.",[["ISO/IEC 22989","https://www.iso.org/standard/22989"]]),
+  N("iso23053","ISO/IEC 23053 (ML framework)","govern","doc","Framework for AI systems built using machine learning.",[["ISO/IEC 23053","https://www.iso.org/standard/23053"]]),
+  N("iso38507","ISO/IEC 38507 (governance of AI)","govern","doc","Board-level governance implications of AI use.",[["ISO/IEC 38507","https://www.iso.org/standard/38507"]]),
+  N("iso23894","ISO/IEC 23894 (AI risk management)","risk","doc","Guidance on managing AI-specific risk; companion to 42001.",[["ISO/IEC 23894","https://www.iso.org/standard/23894"]]),
+  N("iso42005","ISO/IEC 42005 (AI impact assessment)","risk","doc","How to conduct an AI system impact assessment.",[["ISO/IEC 42005","https://www.iso.org/standard/42005"]]),
+  N("iso24028","ISO/IEC TR 24028 (trustworthiness)","risk","doc","Overview of trustworthiness in AI.",[["ISO/IEC TR 24028","https://www.iso.org/standard/24028"]]),
+  N("iso24027","ISO/IEC TR 24027 (bias)","data","doc","Bias in AI systems and AI-aided decision-making.",[["ISO/IEC TR 24027","https://www.iso.org/standard/24027"]]),
+  N("iso8183","ISO/IEC 8183 (data life cycle)","data","doc","AI data life-cycle framework — governance and quality.",[["ISO/IEC 8183","https://www.iso.org/standard/8183"]]),
+  // IEEE + global ethics
+  N("ieee7000","IEEE 7000-2021 (ethical design)","ethics","doc","Process for addressing ethical concerns during system design.",[["IEEE 7000-2021","https://standards.ieee.org/ieee/7000/6781/"]]),
+  N("oecdprin","OECD AI Principles","ethics","doc","First intergovernmental AI standard — values for trustworthy AI.",[["OECD AI Principles","https://oecd.ai/en/ai-principles"]]),
+  N("unescorec","UNESCO Recommendation on AI Ethics","ethics","doc","Global standard on AI ethics adopted by 190+ states.",[["UNESCO Recommendation","https://www.unesco.org/en/artificial-intelligence/recommendation-ethics"]]),
+  // safety & security + TEVV
+  N("ncscsecai","NCSC Guidelines for Secure AI","safesec","doc","International baseline for securing AI across the lifecycle.",[["Secure AI guidelines","https://www.ncsc.gov.uk/collection/guidelines-secure-ai-system-development"]]),
+  N("etsits","ETSI TS 104 223 (Securing AI)","safesec","doc","First global baseline cyber-security standard for AI (free download).",[["ETSI TS 104 223 (NCSC)","https://www.ncsc.gov.uk/blog-post/new-etsi-standard-protects-ai-systems-from-evolving-cyber-threats"]]),
+  N("ukcaf","UK Cyber Assessment Framework (CAF)","safesec","doc","NCSC outcome-based cyber-resilience framework used across UK CNI.",[["NCSC CAF","https://www.ncsc.gov.uk/collection/cyber-assessment-framework"]]),
+  N("intlreport","International AI Safety Report","tevv","doc","Bengio-chaired international scientific assessment of advanced-AI risk.",[["Report","https://internationalaisafetyreport.org/"]]),
+];
+const LINKS_INTL = [
+  L("nistrmf","nist","by"), L("nistgenai","nist","by"), L("nistrmf","nistgenai","profile: GenAI"),
+  L("aiactionplan","nist","tasks"), L("ombai","nist","references"), L("aiactionplan","ombai","builds on"), L("caisi","nist","part of"),
+  L("iso42001","iso","by"), L("iso22989","iso","by"), L("iso23053","iso","by"), L("iso38507","iso","by"),
+  L("iso23894","iso","by"), L("iso42005","iso","by"), L("iso24028","iso","by"), L("iso24027","iso","by"), L("iso8183","iso","by"),
+  L("ieee7000","ieee","by"), L("oecdprin","oecdai","by"), L("unescorec","unesco","by"),
+  L("euaiact","euaio","overseen by"), L("euaiact","cen","harmonised standards"), L("cen","iso","adopts from"),
+  L("etsits","etsi","by"), L("etsits","ncsc","co-authored"), L("ncscsecai","ncsc","by"), L("ukcaf","ncsc","by"),
+  L("iso42001","iso23894","risk companion"), L("iso42001","iso38507","governed by"), L("iso42001","iso22989","uses terminology"),
+  L("iso42001","nistrmf","complements"), L("iso42001","euaiact","supports conformity"),
+  L("nistrmf","iso23894","aligns"), L("iso23053","iso22989","builds on"),
+  L("iso23894","iso24028","trustworthiness"), L("iso42005","iso23894","impact \u2194 risk"),
+  L("euaiact","coeconv","rights-aligned"), L("euaiact","oecdprin","definition basis"),
+  L("oecdprin","unescorec","ethical foundations"), L("coeconv","unescorec","rights-based"),
+  L("ieee7000","oecdprin","informed"), L("ieee7000","iso42001","design process"), L("iso24027","ieee7000","bias \u2194 ethics"),
+  L("ncscsecai","etsits","basis for"), L("ukcaf","ncscsecai","AI applies"), L("caisi","ncscsecai","security evals"),
+  L("iso8183","iso24027","data \u2194 bias"),
+  L("aihub","iso","tracks"), L("aihub","cen","tracks"), L("aihub","iso42001","explains"),
+  L("bsi","iso42001","national adoption"), L("bsi","aihub","partner"),
+  L("oecdai","iso","coordinates"), L("oecdai","intlreport","hosts dialogue"),
+];
+const META_INTL = {
+  iso:{s:"ISO/IEC JTC 1/SC 42 — the international subcommittee behind the core AI standards (the 42001 / 23894 / 22989 family)."},
+  nist:{s:"The US National Institute of Standards and Technology — author of the AI RMF and home of CAISI; a reference point well beyond the US."},
+  ncsc:{s:"The UK National Cyber Security Centre — owner of the secure-AI guidelines and the CAF, and co-author of the ETSI baseline."},
+  caisi:{s:"NIST's Center for AI Standards and Innovation (formerly the US AI Safety Institute) — model evaluations and AI security; the US counterpart to the UK AISI."},
+  cen:{s:"CEN-CENELEC JTC 21 — drafts the harmonised European standards that give presumption of conformity with the EU AI Act."},
+  aihub:{s:"The UK AI Standards Hub (Turing, BSI, NPL, DSIT) — a free portal mapping and explaining global AI standards. A good first stop."},
+  etsi:{s:"ETSI and its Technical Committee on Securing AI (TC SAI) — home of the first global AI cyber-security baseline."},
+  ieee:{s:"The IEEE Standards Association — the 7000 ethics series and the CertifAIEd certification programme."},
+  bsi:{s:"The British Standards Institution — the UK national body, adopting ISO/IEC AI standards as BS and an AI Standards Hub partner."},
+  oecdai:{s:"OECD.AI and the Global Partnership on AI — the policy observatory behind the OECD AI Principles and cross-government coordination."},
+  unesco:{s:"UNESCO — author of the global Recommendation on the Ethics of AI, adopted by 190+ states."},
+  euaio:{s:"The European AI Office — the Commission body implementing and enforcing the AI Act, especially for general-purpose AI models."},
+  nistrmf:{e:5,t:3,l:"~48 pp + Playbook",s:"The US voluntary, risk-based framework (Govern / Map / Measure / Manage) for trustworthy AI across the lifecycle. Non-certifiable but globally influential and broadly interoperable with ISO/IEC 42001 \u2014 a sensible orientation point for any AI risk programme. (NIST is revising it under the 2025 AI Action Plan.)"},
+  nistgenai:{e:3,t:4,l:"~50 pp (PDF)",s:"NIST's generative-AI companion profile: around 200 concrete risk-mitigation actions for GenAI, from data privacy and IP to CBRN and harmful outputs. Practical for anyone deploying foundation models."},
+  aiactionplan:{e:4,t:2,l:"~28 pp (PDF)",s:"The US federal AI strategy (July 2025): three pillars \u2014 accelerate innovation, build infrastructure, lead internationally \u2014 with tasks for NIST/CAISI on evaluations and security. Useful for reading US direction of travel, including a planned revision of the AI RMF."},
+  ombai:{e:3,t:2,l:"Memo (~10 pp)",s:"OMB M-25-21 sets how US federal agencies govern and use AI \u2014 Chief AI Officers, risk practices for high-impact AI, and public trust. The federal public-sector counterpart to the UK's AI Playbook."},
+  euaiact:{e:5,t:4,l:"Regulation (~113 art.)",s:"The EU's comprehensive, risk-based AI law (in force August 2024; phased to 2027). It bans unacceptable-risk uses, imposes obligations on high-risk and general-purpose AI, and leans heavily on harmonised CEN-CENELEC standards for conformity. The single most consequential AI rulebook for anyone operating in or selling into the EU."},
+  coeconv:{e:3,t:1,l:"Treaty",s:"The Council of Europe's Framework Convention on AI (2024) \u2014 the first binding international AI treaty, aligning AI with human rights, democracy and the rule of law. Principles-level rather than technical."},
+  iso42001:{e:5,t:4,l:"Management-system standard",s:"The world's first certifiable AI management-system standard (often called the 'ISO 27001 of AI'): policy, risk, controls and continual improvement for organisations that develop or use AI. Increasingly the anchor for demonstrable AI governance and likely procurement currency. The page is free to view; the full text is purchasable."},
+  iso22989:{e:2,t:4,l:"Vocabulary standard",s:"The foundational AI concepts-and-terminology standard that the rest of the SC 42 family builds on. Low day-to-day relevance, but the shared language underneath everything."},
+  iso23053:{e:2,t:4,l:"Framework standard",s:"A framework for describing AI systems built using machine learning \u2014 components, pipeline and lifecycle. Technical scaffolding rather than governance."},
+  iso38507:{e:4,t:2,l:"Governance standard",s:"Guidance for boards and governing bodies on the governance (as opposed to management) of AI \u2014 the oversight layer that sits above ISO/IEC 42001."},
+  iso23894:{e:4,t:4,l:"Risk-management standard",s:"AI-specific risk-management guidance mapped to ISO 31000; the detailed methodology behind 42001's risk requirements. Directly useful for building an AI risk process."},
+  iso42005:{e:4,t:3,l:"Impact-assessment standard",s:"How to conduct an AI system impact assessment \u2014 process, timing and documentation. A close cousin of data-protection impact assessments, and relevant where AI affects individuals or critical services."},
+  iso24028:{e:3,t:4,l:"Technical report",s:"An overview of trustworthiness in AI \u2014 robustness, reliability, transparency and the trade-offs between them. Conceptual groundwork for the risk standards."},
+  iso24027:{e:3,t:4,l:"Technical report",s:"Bias in AI systems and AI-aided decision-making \u2014 sources of bias and assessment techniques. The data-and-fairness companion to the risk family."},
+  iso8183:{e:3,t:4,l:"Data-lifecycle standard",s:"The AI data life-cycle framework \u2014 acquisition, preparation, quality and provenance. Where data governance meets AI engineering."},
+  ieee7000:{e:3,t:3,l:"Process standard",s:"IEEE's process standard for embedding stakeholder ethical values into system design from the outset, with a traceable 'value register'. Voluntary and not certifiable; the IEEE CertifAIEd programme builds on the 7000 series."},
+  oecdprin:{e:3,t:1,l:"Principles (Recommendation)",s:"The first intergovernmental AI standard (2019, updated 2024): inclusive growth, human-centred values, transparency, robustness and accountability. The source of the shared 'AI system' definition adopted by the EU, US and others."},
+  unescorec:{e:3,t:1,l:"Recommendation",s:"UNESCO's global Recommendation on the Ethics of AI (2021), adopted by 190+ states: human rights and dignity, with concrete policy-action areas. Soft law, but the broadest normative baseline."},
+  ncscsecai:{e:4,t:5,l:"Guidelines (~20 pp)",s:"The UK-led, 20+ agency international guidelines for secure AI development (design \u2192 operation). The global security-by-design anchor for AI \u2014 directly relevant to CNI and your remit."},
+  etsits:{e:3,t:5,l:"Technical specification",s:"ETSI TS 104 223 \u2014 the first global baseline cyber-security standard for AI models and systems (13 principles across 5 lifecycle stages), built from the UK code. Free to download; the implementable security floor."},
+  ukcaf:{e:5,t:4,l:"Framework (outcome-based)",s:"The NCSC Cyber Assessment Framework \u2014 outcome-based cyber-resilience principles used across UK CNI and the NIS regime. The backbone of how energy and other essential-service operators evidence cyber resilience, with AI assessed within it. Central to your world."},
+  intlreport:{e:3,t:3,l:"~300 pp (report)",s:"The international scientific report on advanced-AI safety (chaired by Yoshua Bengio), commissioned through the Bletchley process \u2014 a shared evidence base on capabilities and risks ahead of the summits."},
+};
+const DATA_INTL={GROUPS:GROUPS_INTL,NODES:NODES_INTL,LINKS:LINKS_INTL,META:META_INTL};
 
 const NS="http://www.w3.org/2000/svg";
 const svg=document.getElementById("net"), gView=document.getElementById("view");
@@ -617,7 +741,7 @@ const gLinks=document.getElementById("links"), gNodes=document.getElementById("n
 let W=svg.clientWidth, H=svg.clientHeight, cx=W/2, cy=H/2;
 
 // init positions in a loose ring by group
-const groupKeys=Object.keys(GROUPS);
+let groupKeys=Object.keys(GROUPS);
 NODES.forEach((n,i)=>{
   const gi=groupKeys.indexOf(n.group);
   const a=(gi/groupKeys.length)*Math.PI*2 + (i%7)*0.16;
@@ -910,19 +1034,24 @@ svg.addEventListener("click",e=>{ if(!e.target.closest(".node")){ closePanel(); 
 
 /* ---------------- legend / filters ---------------- */
 const legend=document.getElementById("legend");
-const counts={}; NODES.forEach(n=>counts[n.group]=(counts[n.group]||0)+1);
-const active=new Set(groupKeys);
-groupKeys.forEach(k=>{
-  const g=GROUPS[k];
-  const el=document.createElement("div"); el.className="leg"; el.dataset.k=k;
-  el.innerHTML=`<span class="sw" style="background:${g.c}"></span><span>${g.name}</span><span class="ct mono">${counts[k]||0}</span>`;
-  el.onclick=()=>{
-    if(active.has(k)){active.delete(k); el.classList.add("off");}
-    else{active.add(k); el.classList.remove("off");}
-    applyFilter();
-  };
-  legend.appendChild(el);
-});
+let active=new Set(groupKeys);
+function buildLegend(){
+  legend.innerHTML="";
+  active=new Set(groupKeys);
+  const counts={}; NODES.forEach(n=>counts[n.group]=(counts[n.group]||0)+1);
+  groupKeys.forEach(k=>{
+    const g=GROUPS[k];
+    const el=document.createElement("div"); el.className="leg"; el.dataset.k=k;
+    el.innerHTML=`<span class="sw" style="background:${g.c}"></span><span>${g.name}</span><span class="ct mono">${counts[k]||0}</span>`;
+    el.onclick=()=>{
+      if(active.has(k)){active.delete(k); el.classList.add("off");}
+      else{active.add(k); el.classList.remove("off");}
+      applyFilter();
+    };
+    legend.appendChild(el);
+  });
+}
+buildLegend();
 function setAllFilters(on){
   active.clear();
   if(on) groupKeys.forEach(k=>active.add(k));
@@ -1116,7 +1245,10 @@ const OFFICIAL_DOMAINS=["gov.uk","legislation.gov.uk","ofgem.gov.uk","nao.org.uk
   "neso.energy","ncsc.gov.uk","aisi.gov.uk","ico.org.uk","ofcom.org.uk","fca.org.uk","caa.co.uk",
   "onr.org.uk","equalityhumanrights.com","ofwat.gov.uk","etsi.org","publishing.service.gov.uk",
   "bills.parliament.uk","committees.parliament.uk","nhs.uk","catapult.org.uk",
-  "ukri.org","drcf.org.uk","aistandardshub.org","internationalaisafetyreport.org","w3.org"];
+  "ukri.org","drcf.org.uk","aistandardshub.org","internationalaisafetyreport.org","w3.org",
+  "iso.org","iec.ch","ieee.org","standards.ieee.org","nist.gov","csrc.nist.gov","nvlpubs.nist.gov",
+  "whitehouse.gov","eur-lex.europa.eu","europa.eu","ec.europa.eu","digital-strategy.ec.europa.eu",
+  "cencenelec.eu","jtc21.eu","oecd.org","oecd.ai","unesco.org","coe.int"];
 const QA_JOKES=[
   "Reticulating splines\u2026",
   "Why did the neural network go to therapy? Too many unresolved layers.",
@@ -1221,6 +1353,62 @@ async function runQA(){
   if(qaCancel){ done(true); return; }
   done(false);
 }
+
+/* ---------------- map view toggle (UK <-> International) ---------------- */
+let currentDS="uk";
+function switchDataset(key){
+  if(key===currentDS) return;
+  currentDS=key;
+  const d = key==="intl" ? DATA_INTL : DATA_UK;
+  // swap the live data references
+  GROUPS=d.GROUPS; NODES=d.NODES; LINKS=d.LINKS; META=d.META;
+  // tear down current DOM
+  gNodes.innerHTML=""; gLinks.innerHTML=""; gEdge.innerHTML="";
+  // re-wire
+  byId=Object.fromEntries(NODES.map(n=>[n.id,n]));
+  LINKS.forEach(l=>{ l.source=byId[l.s]; l.target=byId[l.t]; });
+  NODES.forEach(n=>n.deg=0); LINKS.forEach(l=>{ l.source.deg++; l.target.deg++; });
+  NODES.forEach(n=>{ const m=META[n.id]; if(m){ n.exec=m.e; n.tech=m.t; n.len=m.l; if(m.s) n.desc=m.s; } });
+  groupKeys=Object.keys(GROUPS);
+  // fresh ring layout
+  syncSize();
+  NODES.forEach((n,i)=>{
+    const gi=groupKeys.indexOf(n.group);
+    const a=(gi/groupKeys.length)*Math.PI*2 + (i%7)*0.16;
+    const r=Math.min(W,H)*0.30 + (i%5)*14;
+    n.x=cx+Math.cos(a)*r; n.y=cy+Math.sin(a)*r; n.vx=0; n.vy=0; n.fixed=false; n.hidden=false; n.el=null;
+  });
+  // rebuild DOM, legend, filters
+  linkEls=LINKS.map(buildLink); nodeEls=NODES.map(buildNode);
+  buildLegend();
+  // refresh updater dedupe sets for the new dataset
+  existingPaths.clear();
+  NODES.forEach(n=>n.links&&n.links.forEach(([,u])=>{ try{ existingPaths.add(new URL(u).pathname.replace(/\/$/,"")); }catch(e){} }));
+  addedPaths.clear();
+  // swap header text
+  const t=document.getElementById("mapTitle"), s=document.getElementById("mapSub");
+  if(key==="intl"){
+    t.innerHTML='International AI Standards &amp; Guidance <b>Map</b>';
+    s.textContent='Standards, frameworks and codes \u2014 and how they relate by theme';
+  }else{
+    t.innerHTML='The UK AI Governance <b>Map</b>';
+    s.textContent='Bodies, regulators, guidance, etc. \u2014 and how they connect';
+  }
+  // settle + fit
+  closePanel();
+  alpha=1; for(let i=0;i<280;i++) step(); reheat(0.6);
+  updateCounts(); applyFilter(); recentreSoon(1600);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>recentre()));
+}
+document.querySelectorAll(".mt-opt").forEach(btn=>{
+  btn.onclick=()=>{
+    if(btn.classList.contains("active")) return;
+    document.querySelectorAll(".mt-opt").forEach(b=>{
+      const on=b===btn; b.classList.toggle("active",on); b.setAttribute("aria-selected",on?"true":"false");
+    });
+    switchDataset(btn.dataset.ds);
+  };
+});
 
 window.addEventListener("resize",()=>{ recentre(); resetPanelPos(); });
 </script>
