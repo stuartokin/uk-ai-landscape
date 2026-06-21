@@ -117,6 +117,22 @@
   .cand .add:hover{background:rgba(94,234,212,.2)}
   .cand .add.done{color:#9bd17e; border-color:rgba(127,176,105,.4); background:rgba(127,176,105,.12); cursor:default}
   .sheet-note{font-size:10.5px; color:var(--faint); line-height:1.55; border-top:1px solid var(--line); padding-top:10px; margin-top:6px}
+  /* quality check */
+  .update.qa{background:linear-gradient(180deg,rgba(167,139,250,.12),rgba(167,139,250,.04)); border-color:rgba(167,139,250,.35); color:#dcd2ff}
+  .update.qa:hover{border-color:#A78BFA; background:rgba(167,139,250,.18)}
+  .qa-bar{height:8px; background:var(--ink2); border:1px solid var(--line2); border-radius:6px; overflow:hidden; margin:8px 0}
+  .qa-fill{height:100%; width:0; background:linear-gradient(90deg,var(--cyan),#A78BFA); transition:width .35s ease}
+  .qa-joke{font-size:11.5px; color:var(--dim); font-style:italic; min-height:16px; margin:2px 0 12px}
+  .qa-actions{display:flex; gap:8px; margin-bottom:10px}
+  .qa-go{background:var(--cyan); color:#04181a; border:none; font-weight:700; border-radius:8px; padding:9px 16px; font-size:12.5px; cursor:pointer}
+  .qa-cancel{background:transparent; border:1px solid var(--line2); color:var(--dim); border-radius:8px; padding:9px 14px; font-size:12.5px; cursor:pointer}
+  .qa-cancel:hover{border-color:#ffb4a0; color:#ffb4a0}
+  .qa-find{display:flex; gap:8px; font-size:11.5px; line-height:1.45; padding:7px 9px; border-radius:8px; background:var(--ink2); border:1px solid var(--line); margin-bottom:6px}
+  .qa-find .ic{flex:0 0 auto; font-weight:700}
+  .qa-find.pass .ic{color:#7fd17e}
+  .qa-find.warn .ic{color:#F59E0B}
+  .qa-find.fail .ic{color:#ff8a7a}
+  .qa-find.info .ic{color:#8fb3ff}
   .toast{position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:8;
     background:rgba(16,26,35,.96); border:1px solid var(--line2); border-radius:10px; padding:9px 12px;
     font-size:12px; color:var(--text); display:none; align-items:center; gap:12px; box-shadow:var(--shadow); max-width:92%}
@@ -225,7 +241,7 @@
 <div class="app">
   <header>
     <h1>The UK AI Governance <b>Map</b></h1>
-    <div class="sub">Bodies, regulators, codes and laws — and how they connect</div>
+    <div class="sub">Bodies, regulators, guidance, etc. — and how they connect</div>
   </header>
 
   <div class="mid">
@@ -236,9 +252,10 @@
     </div>
 
     <button class="update" id="updateBtn">&#x21BB;&nbsp; Check GOV.UK for new sources</button>
+    <button class="update qa" id="qaBtn">&#x2713;&nbsp; Run a quality check</button>
 
     <div class="themes-hd">
-      <h2>Themes — tap to filter</h2>
+      <h2>Tap to filter</h2>
       <div class="theme-btns">
         <button id="selAll" type="button">All</button>
         <button id="selNone" type="button">None</button>
@@ -304,6 +321,23 @@
     <div id="status" class="sheet-status"></div>
     <div id="results" class="sheet-results"></div>
     <div class="sheet-note">Live from the GOV.UK Search API (<span class="mono">www.gov.uk/api/search.json</span>). Regulators on their own domains &mdash; Ofgem, ICO, Ofcom, FCA, ETSI &mdash; aren&rsquo;t covered here. Results are unverified: always open the source before relying on it.</div>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="qaWrap">
+  <div class="sheet" role="dialog" aria-label="Quality check" aria-modal="true">
+    <button class="x" id="qaX" aria-label="Close">&#x2715;</button>
+    <div class="p-kind"><span class="sw" style="background:var(--cyan)"></span>Quality check &middot; free, in-browser</div>
+    <h3 class="p-title">Run a quality check</h3>
+    <p class="sheet-desc">Goes through every entity and document and checks: link formatting, official-domain coverage, duplicate links, orphan nodes, assessment coverage, and draft/consultation items worth re-checking &mdash; then queries GOV.UK for newer sources. <b>This can take a minute or two.</b> Browsers can&rsquo;t confirm a link is live or detect supersession outside GOV.UK, so flagged items are for your review, not auto-fixed. No cost is incurred.</p>
+    <div class="qa-bar" id="qaBarWrap" style="display:none"><div class="qa-fill" id="qaBar"></div></div>
+    <div id="qaStatus" class="sheet-status"></div>
+    <div id="qaJoke" class="qa-joke"></div>
+    <div class="qa-actions">
+      <button id="qaStart" class="qa-go">Start check</button>
+      <button id="qaCancelBtn" class="qa-cancel" style="display:none">Cancel</button>
+    </div>
+    <div id="qaResults" class="sheet-results"></div>
   </div>
 </div>
 
@@ -466,6 +500,10 @@ const LINKS = [
   L("bletchley","summits","from"), L("seoul","summits","from"), L("seoul","aisi","frameworks for"),
   L("desnz","energydata","published"), L("ofgem","energydata","input to",true), L("energydata","aiec","feeds",true), L("duaa","energydata","smart-data powers"),
   L("ofgem","ethicalai","published",true), L("ethicalai","principles","operationalises"), L("ethicalai","ncsc","cyber appendix",true), L("ethicalai","etsi","references"),
+  // de-orphan: industrial strategy, NPSA, Ofwat
+  L("indstrat","aoap","frames"), L("indstrat","aigz","backs"),
+  L("npsa","ncsc","works with"),
+  L("principles","ofwat","applied by"),
 ];
 
 /* ---------------- build graph ---------------- */
@@ -1020,6 +1058,118 @@ if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
 }
 
 function resetPanelPos(){ panel.classList.remove("moved"); panel.style.left=panel.style.top=panel.style.right=panel.style.bottom=panel.style.width=""; }
+/* ---------------- quality check (free, in-browser) ---------------- */
+const OFFICIAL_DOMAINS=["gov.uk","legislation.gov.uk","ofgem.gov.uk","nao.org.uk","ai.gov.uk",
+  "turing.ac.uk","bankofengland.co.uk","npl.co.uk","npsa.gov.uk","bsigroup.com","rai.ac.uk",
+  "neso.energy","ncsc.gov.uk","aisi.gov.uk","ico.org.uk","ofcom.org.uk","fca.org.uk","caa.co.uk",
+  "onr.org.uk","equalityhumanrights.com","ofwat.gov.uk","etsi.org","publishing.service.gov.uk",
+  "bills.parliament.uk","committees.parliament.uk","nhs.uk","catapult.org.uk",
+  "ukri.org","drcf.org.uk","aistandardshub.org","internationalaisafetyreport.org","w3.org"];
+const QA_JOKES=[
+  "Reticulating splines\u2026",
+  "Why did the neural network go to therapy? Too many unresolved layers.",
+  "I\u2019d tell you a UDP joke, but you might not get it.",
+  "Why did the document feel superseded? It met a newer version of itself.",
+  "Two consultations walk into a bar. Both close without an outcome.",
+  "Why don\u2019t APIs get lonely? They\u2019re always handling requests.",
+  "I asked a model for a current link. It confidently hallucinated a 404.",
+  "The transformer was shocked \u2014 but it adapted.",
+  "There are 10 kinds of people: those who read binary, and those who don\u2019t.",
+  "Regulators\u2019 favourite dance: the compliance shuffle.",
+  "Why was the AI bad at football? It kept overfitting.",
+  "A byte walked into a bar and ordered a bit. Things escalated.",
+  "Keeping the grid stable and the jokes unstable\u2026",
+  "Why did the dataset blush? It saw the model\u2019s parameters."
+];
+const qaWrap=document.getElementById("qaWrap");
+const qaBarWrap=document.getElementById("qaBarWrap"), qaBar=document.getElementById("qaBar");
+const qaStatus=document.getElementById("qaStatus"), qaJoke=document.getElementById("qaJoke"), qaResults=document.getElementById("qaResults");
+const qaStart=document.getElementById("qaStart"), qaCancelBtn=document.getElementById("qaCancelBtn");
+let qaCancel=false, qaJokeTimer=null, qaRunning=false;
+const qaSleep=ms=>new Promise(r=>setTimeout(r,ms));
+function isOfficial(url){ try{ const h=new URL(url).hostname.replace(/^www\./,""); return OFFICIAL_DOMAINS.some(d=>h===d||h.endsWith("."+d)); }catch(e){ return false; } }
+function qaOpen(){ qaWrap.classList.add("open"); }
+function qaClose(){ qaWrap.classList.remove("open"); if(qaRunning) qaCancel=true; }
+document.getElementById("qaBtn").onclick=qaOpen;
+document.getElementById("qaX").onclick=qaClose;
+qaWrap.addEventListener("click",e=>{ if(e.target===qaWrap) qaClose(); });
+qaCancelBtn.onclick=()=>{ qaCancel=true; };
+qaStart.onclick=runQA;
+function qaSetProg(p,msg){ qaBar.style.width=Math.round(p)+"%"; if(msg!=null) qaStatus.textContent=msg; }
+function qaAdd(level,text){
+  const icons={pass:"\u2713",warn:"\u26A0",fail:"\u2715",info:"\u2139"};
+  const d=document.createElement("div"); d.className="qa-find "+level;
+  d.innerHTML='<span class="ic">'+icons[level]+'</span><span>'+escapeHTML(text)+'</span>';
+  qaResults.appendChild(d);
+}
+async function runQA(){
+  if(qaRunning) return;
+  qaRunning=true; qaCancel=false; qaResults.innerHTML="";
+  qaBarWrap.style.display="block"; qaStart.style.display="none"; qaCancelBtn.style.display="inline-block";
+  qaSetProg(0,"Starting\u2026");
+  let ji=Math.floor(Math.random()*QA_JOKES.length); qaJoke.textContent=QA_JOKES[ji];
+  qaJokeTimer=setInterval(()=>{ ji=(ji+1)%QA_JOKES.length; qaJoke.textContent=QA_JOKES[ji]; },3500);
+  const done=(cancelled)=>{
+    clearInterval(qaJokeTimer); qaJokeTimer=null; qaJoke.textContent="";
+    qaRunning=false; qaCancelBtn.style.display="none";
+    qaStart.style.display="inline-block"; qaStart.textContent="Run again";
+    qaStatus.textContent=cancelled?"Cancelled.":"Quality check complete \u2014 review the flags above.";
+    if(!cancelled) qaSetProg(100);
+  };
+  // 1) link format, official-domain, duplicates
+  let total=0; NODES.forEach(n=>n.links&&(total+=n.links.length));
+  let i=0; const badUrl=[], nonOff=[], urlCount=new Map();
+  for(const n of NODES){
+    if(qaCancel){ done(true); return; }
+    for(const pair of (n.links||[])){
+      const url=pair[1]; i++;
+      try{ new URL(url); if(!/^https:\/\//i.test(url)) badUrl.push(n.label+" (not https)"); }
+      catch(e){ badUrl.push(n.label+" (malformed)"); }
+      if(!isOfficial(url)) nonOff.push(n.label);
+      urlCount.set(url,(urlCount.get(url)||0)+1);
+      qaSetProg(i/total*32,"Checking link "+i+" of "+total+"\u2026");
+      if(i%3===0) await qaSleep(55);
+    }
+  }
+  qaAdd(badUrl.length?"warn":"pass", badUrl.length? badUrl.length+" link(s) malformed or not HTTPS: "+badUrl.join("; ") : "All "+total+" links are well-formed HTTPS URLs.");
+  qaAdd(nonOff.length?"warn":"pass", nonOff.length? nonOff.length+" item(s) link off recognised official domains \u2014 review: "+[...new Set(nonOff)].join(", ") : "Every link is on a recognised official domain.");
+  const dups=[...urlCount].filter(x=>x[1]>1).map(x=>x[0]);
+  qaAdd(dups.length?"warn":"pass", dups.length? dups.length+" duplicate link URL(s): "+dups.join(", ") : "No duplicate links.");
+  // 2) structure: orphans
+  if(qaCancel){ done(true); return; }
+  qaSetProg(45,"Checking graph structure\u2026"); await qaSleep(350);
+  const deg={}; LINKS.forEach(l=>{ deg[l.source.id]=(deg[l.source.id]||0)+1; deg[l.target.id]=(deg[l.target.id]||0)+1; });
+  const orphans=NODES.filter(n=>!deg[n.id]&&!n.isNew).map(n=>n.label);
+  qaAdd(orphans.length?"warn":"pass", orphans.length? orphans.length+" node(s) have no connections: "+orphans.join(", ") : "Every node has at least one connection.");
+  // 3) assessment coverage
+  if(qaCancel){ done(true); return; }
+  qaSetProg(56,"Checking assessment coverage\u2026"); await qaSleep(350);
+  const docless=NODES.filter(n=>["doc","law","framework"].includes(n.type)&&n.exec==null&&!n.isNew).map(n=>n.label);
+  qaAdd(docless.length?"fail":"pass", docless.length? docless.length+" document(s) missing an assessment: "+docless.join(", ") : "All documents carry an exec/technical assessment.");
+  // 4) supersession / consultation flags
+  if(qaCancel){ done(true); return; }
+  qaSetProg(66,"Scanning for drafts / consultations to re-check\u2026"); await qaSleep(450);
+  const rx=/(consultation|draft|proposed|call for evidence|withdrawn|supersed)/i;
+  const review=NODES.filter(n=>rx.test(n.desc||"")||rx.test(n.label||"")).map(n=>n.label);
+  qaAdd(review.length?"warn":"pass", review.length? review.length+" item(s) mention a draft/consultation/CfE \u2014 worth checking for a published outcome: "+review.join(", ") : "No draft/consultation items flagged.");
+  // 5) GOV.UK currency (network, optional)
+  if(qaCancel){ done(true); return; }
+  qaSetProg(74,"Querying GOV.UK for newer sources\u2026 (needs the network)");
+  try{
+    const res=await fetch(withProxy(apiURL()),{headers:{Accept:"application/json"}});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data=await res.json(); const all=data.results||[];
+    const fresh=all.filter(r=>{ const link=r.link||""; const full=link.startsWith("http")?link:("https://www.gov.uk"+link);
+      let path; try{ path=new URL(full).pathname.replace(/\/$/,""); }catch(e){ return false; } return !existingPaths.has(path)&&!addedPaths.has(path); });
+    qaSetProg(95,"GOV.UK returned "+all.length+" items.");
+    qaAdd(fresh.length?"warn":"pass", fresh.length? fresh.length+" recent GOV.UK AI item(s) not on the map \u2014 open \u201CCheck GOV.UK for new sources\u201D to review and add them." : "No new GOV.UK AI items for the tracked organisations.");
+  }catch(err){
+    qaAdd("info","Live GOV.UK currency check unavailable in this browser (cross-origin blocked). Link liveness and supersession outside GOV.UK can\u2019t be auto-verified \u2014 please review the flagged items manually.");
+  }
+  if(qaCancel){ done(true); return; }
+  done(false);
+}
+
 window.addEventListener("resize",()=>{ recentre(); resetPanelPos(); });
 </script>
 </body>
