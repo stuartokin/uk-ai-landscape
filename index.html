@@ -47,6 +47,12 @@
     overflow:auto; background:linear-gradient(180deg,var(--panel2),transparent 60%);}
   .rail h2{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint);
     margin:0 0 9px; font-weight:600}
+  .themes-hd{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 9px}
+  .themes-hd h2{margin:0}
+  .theme-btns{display:flex; gap:5px; flex:0 0 auto}
+  .theme-btns button{background:var(--ink2); border:1px solid var(--line2); color:var(--dim);
+    border-radius:6px; padding:3px 9px; font-size:10.5px; cursor:pointer; letter-spacing:.02em}
+  .theme-btns button:hover{border-color:var(--cyan); color:#fff}
   .search{position:relative; margin-bottom:18px}
   .search input{width:100%; background:var(--ink2); border:1px solid var(--line2); color:var(--text);
     border-radius:9px; padding:9px 11px 9px 32px; font-size:13px; outline:none}
@@ -242,7 +248,13 @@
 
     <button class="update" id="updateBtn">&#x21BB;&nbsp; Check GOV.UK for new sources</button>
 
-    <h2>Themes — tap to filter</h2>
+    <div class="themes-hd">
+      <h2>Themes — tap to filter</h2>
+      <div class="theme-btns">
+        <button id="selAll" type="button">All</button>
+        <button id="selNone" type="button">None</button>
+      </div>
+    </div>
     <div class="legend" id="legend"></div>
 
     <div class="stats">
@@ -369,7 +381,7 @@ const NODES = [
   N("fca","FCA","regulators","body","AI in financial services via the AI Lab, Live Testing and the Supercharged Sandbox.",[["FCA AI Lab","https://www.fca.org.uk/firms/innovation/ai-lab"]]),
   N("boe","Bank of England / PRA","regulators","body","Financial-stability lens; joint AI strategy and PRA SS1/23 model-risk expectations.",[["Bank of England — AI","https://www.bankofengland.co.uk/research/fintech/artificial-intelligence-consortium"]]),
   N("mhra","MHRA","regulators","body","AI as a medical device (AIaMD) and the 'AI Airlock' sandbox.",[["Software & AI as a medical device","https://www.gov.uk/government/collections/software-and-artificial-intelligence-ai-as-a-medical-device"]]),
-  N("ofgem","Ofgem","energy","body","Energy-sector AI / CNI lead. Strategic approach (2024) → sector guidance (2025) → AI Technical Sandbox & AI Reg Lab (2025–26), with a possible statutory AI duty ahead. Contact: AIPolicy@ofgem.gov.uk.",[["Strategic approach to AI","https://www.ofgem.gov.uk/sites/default/files/2024-04/Ofgem%27s%20strategic%20approach%20to%20AI%20FINAL%20240430.pdf"],["Energy-sector AI guidance","https://www.ofgem.gov.uk/consultation/artificial-intelligence-ai-energy-sector-guidance-consultation"],["AI Technical Sandbox","https://www.ofgem.gov.uk/consultation/ai-technical-sandbox"]]),
+  N("ofgem","Ofgem","energy","body","Energy-sector AI / CNI lead. Strategic approach (2024) → sector guidance (2025) → AI Technical Sandbox & AI Reg Lab (2025–26), with a possible statutory AI duty ahead. Contact: AIPolicy@ofgem.gov.uk.",[["Strategic approach to AI","https://www.ofgem.gov.uk/sites/default/files/2024-04/Ofgem%27s%20strategic%20approach%20to%20AI%20FINAL%20240430.pdf"],["Energy-sector AI guidance","https://www.ofgem.gov.uk/energy-regulation/technology-and-innovation/artificial-intelligence"],["AI Technical Sandbox","https://www.ofgem.gov.uk/consultation/ai-technical-sandbox"]]),
   N("onr","ONR","regulators","body","Office for Nuclear Regulation — regulating AI in the nuclear sector.",[["ONR","https://www.onr.org.uk"]]),
   N("caa","CAA","regulators","body","Civil Aviation Authority — AI & advanced automation in aerospace; CAA AI Sandbox.",[["CAA","https://www.caa.co.uk"]]),
   N("ofqual","Ofqual","regulators","body","AI in qualifications and assessment.",[["Ofqual","https://www.gov.uk/government/organisations/ofqual"]]),
@@ -408,6 +420,7 @@ const NODES = [
   N("bletchley","Bletchley Declaration","frontier","doc","Founding international declaration on frontier-AI safety (2023).",[["Bletchley Declaration","https://www.gov.uk/government/publications/ai-safety-summit-2023-the-bletchley-declaration/the-bletchley-declaration-by-countries-attending-the-ai-safety-summit-1-2-november-2023"]]),
   N("seoul","Frontier AI Safety Commitments","frontier","doc","Seoul Summit 2024 commitments: developers publish safety frameworks.",[["Seoul commitments","https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024"]]),
   N("energydata","Data for AI in the Energy System","energy","doc","DESNZ call for evidence on opening energy datasets for AI.",[["Call for evidence","https://www.gov.uk/government/calls-for-evidence/energy-datasets-for-artificial-intelligence-applications"]]),
+  N("ethicalai","Ethical AI Use in the Energy Sector","energy","doc","Ofgem's first good-practice guidance for ethical AI use in Britain's energy sector (May 2025).",[["Guidance page","https://www.ofgem.gov.uk/guidance/ethical-ai-use-energy-sector"],["Guidance (PDF)","https://www.ofgem.gov.uk/sites/default/files/2025-05/ethical-ai-use-in-the-energy-sector-20250516150045.pdf"]]),
 ];
 
 const LINKS = [
@@ -463,6 +476,7 @@ const LINKS = [
   L("frontierdoc","summits","written for"), L("frontierdoc","aisi","informs"), L("frontierdoc","intlreport","precursor to"),
   L("bletchley","summits","from"), L("seoul","summits","from"), L("seoul","aisi","frameworks for"),
   L("desnz","energydata","published"), L("ofgem","energydata","input to",true), L("energydata","aiec","feeds",true), L("duaa","energydata","smart-data powers"),
+  L("ofgem","ethicalai","published",true), L("ethicalai","principles","operationalises"), L("ethicalai","ncsc","cyber appendix",true), L("ethicalai","etsi","references"),
 ];
 
 /* ---------------- build graph ---------------- */
@@ -545,6 +559,7 @@ const META = {
   bletchley:{e:3,t:1,l:"Declaration",s:"The founding declaration of the international AI-safety process (28 countries plus the EU), agreeing a shared understanding of frontier risk — especially in cyber and bio. More diplomatic milestone than technical text."},
   seoul:{e:3,t:2,l:"Commitments document",s:"The Seoul Summit 2024 commitments under which 16+ frontier developers agreed to publish safety frameworks, risk thresholds and transparency measures. A voluntary but globally significant baseline."},
   energydata:{e:4,t:3,l:"Call for evidence (~30 pp)",s:"DESNZ's call for evidence on opening up energy-system datasets for AI, tied to the Data (Use and Access) Act smart-data powers and the Ofgem/NESO digitalisation vision. Squarely in the energy-data-for-AI space and directly relevant to your remit (closes April 2026)."},
+  ethicalai:{e:5,t:4,l:"Guidance (~40 pp PDF)",s:"Ofgem's first dedicated good-practice guidance on ethical AI use in Britain's energy sector (May 2025). Four outcomes — safe, secure, fair, environmentally sustainable — across the AI lifecycle, confirming existing law (REMIT, GDPR, NIS, competition) applies, with governance, risk and competency expectations and a dedicated cyber-security appendix. The central energy-sector AI document for your world."},
 };
 NODES.forEach(n=>{ const m=META[n.id]; if(m){ n.exec=m.e; n.tech=m.t; n.len=m.l; if(m.s) n.desc=m.s; } });
 
@@ -667,8 +682,9 @@ loop();
 let scale=0.8, ox=0, oy=0;
 function applyView(){ gView.setAttribute("transform",`translate(${ox},${oy}) scale(${scale})`); }
 function fit(){
-  const xs=NODES.filter(n=>!n.hidden), 
-    minX=Math.min(...xs.map(n=>n.x)), maxX=Math.max(...xs.map(n=>n.x)),
+  const xs=NODES.filter(n=>!n.hidden);
+  if(!xs.length) return;
+  const minX=Math.min(...xs.map(n=>n.x)), maxX=Math.max(...xs.map(n=>n.x)),
     minY=Math.min(...xs.map(n=>n.y)), maxY=Math.max(...xs.map(n=>n.y));
   const w=maxX-minX||1, h=maxY-minY||1; const pad=70;
   scale=Math.min(2.2, Math.max(0.35, Math.min((W-pad*2)/w,(H-pad*2)/h)));
@@ -888,6 +904,14 @@ groupKeys.forEach(k=>{
   };
   legend.appendChild(el);
 });
+function setAllFilters(on){
+  active.clear();
+  if(on) groupKeys.forEach(k=>active.add(k));
+  document.querySelectorAll(".leg").forEach(el=>el.classList.toggle("off",!on));
+  applyFilter();
+}
+document.getElementById("selAll").onclick=()=>setAllFilters(true);
+document.getElementById("selNone").onclick=()=>setAllFilters(false);
 function applyFilter(){
   NODES.forEach(n=>n.hidden=!active.has(n.group));
   updateCounts(); reheat(0.4); recentreSoon();
