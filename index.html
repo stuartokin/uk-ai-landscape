@@ -88,35 +88,52 @@
   .sheet-wrap{position:fixed; inset:0; z-index:20; display:none; align-items:center; justify-content:center;
     background:rgba(4,8,12,.62); backdrop-filter:blur(3px); padding:18px}
   .sheet-wrap.open{display:flex}
-  .sheet{position:relative; width:min(560px,100%); max-height:86vh; overflow:auto;
+  .sheet{position:relative; width:min(580px,100%); max-height:88vh; overflow:hidden;
+    display:flex; flex-direction:column;
     background:rgba(16,26,35,.98); border:1px solid var(--line2); border-radius:16px; box-shadow:var(--shadow); padding:22px}
-  .sheet .x{position:absolute; right:12px; top:12px; width:28px; height:28px; border-radius:8px;
-    border:1px solid var(--line2); background:transparent; color:var(--dim); cursor:pointer}
+  .sheet .x{position:absolute; right:12px; top:12px; width:28px; height:28px; border-radius:8px; z-index:3;
+    border:1px solid var(--line2); background:rgba(16,26,35,.85); color:var(--dim); cursor:pointer}
   .sheet .x:hover{color:#fff; border-color:var(--cyan)}
-  .sheet-desc{font-size:12.5px; color:var(--dim); line-height:1.55; margin:4px 0 14px}
+  .sheet-desc{font-size:12.5px; color:var(--dim); line-height:1.55; margin:4px 0 14px; flex:0 0 auto}
   .sheet-desc b{color:var(--text)}
-  .sheet-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
+  .sheet-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; flex:0 0 auto}
   .sheet-row input,.sheet-row select{background:var(--ink2); border:1px solid var(--line2); color:var(--text);
     border-radius:9px; padding:9px 11px; font-size:13px; outline:none}
   .sheet-row input#q{flex:1; min-width:170px}
   .sheet-row input:focus,.sheet-row select:focus{border-color:var(--cyan)}
   .sheet-row #go{background:var(--cyan); color:#04181a; border:none; font-weight:700; cursor:pointer; padding:9px 18px}
+  .adv{flex:0 0 auto}
   .adv input{width:100%; background:var(--ink2); border:1px dashed var(--line2); color:var(--dim);
     border-radius:8px; padding:7px 10px; font-size:11px; outline:none; margin-bottom:10px}
-  .sheet-status{font-size:12px; color:var(--dim); min-height:16px; margin:4px 0; line-height:1.55}
+  .sheet-status{font-size:12px; color:var(--dim); min-height:16px; margin:4px 0; line-height:1.55; flex:0 0 auto}
   .sheet-status.err{color:#ffb4a0}
-  .sheet-results{display:flex; flex-direction:column; gap:8px; margin:6px 0}
-  .cand{border:1px solid var(--line2); border-radius:10px; padding:10px 11px; background:var(--ink2)}
+  .sheet-selbar{display:none; align-items:center; gap:13px; margin:4px 0 2px; flex:0 0 auto}
+  .sheet-selbar.show{display:flex}
+  .sheet-selbar label{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--dim); cursor:pointer; user-select:none}
+  .sheet-selbar input{accent-color:var(--cyan); width:15px; height:15px}
+  .addsel{margin-left:auto; background:var(--cyan); color:#04181a; border:none; font-weight:700; border-radius:8px; padding:7px 14px; font-size:12px; cursor:pointer}
+  .addsel:disabled{opacity:.4; cursor:default}
+  .sheet-results{display:flex; flex-direction:column; gap:8px; margin:8px 0; flex:1 1 auto; overflow:auto; min-height:60px; -webkit-overflow-scrolling:touch}
+  .cand{display:flex; gap:10px; align-items:flex-start; border:1px solid var(--line2); border-radius:10px; padding:10px 11px; background:var(--ink2)}
+  .cand-cb{accent-color:var(--cyan); width:16px; height:16px; margin-top:2px; flex:0 0 auto; cursor:pointer}
+  .cand-body{flex:1; min-width:0}
   .cand h4{margin:0 0 3px; font-size:13px; font-weight:600; line-height:1.3}
-  .cand .m{font-size:10.5px; color:var(--faint); margin-bottom:7px}
-  .cand .row{display:flex; gap:8px; align-items:center}
+  .cand .m{font-size:10.5px; color:var(--faint); margin-bottom:5px}
+  .cand-desc{font-size:11.5px; color:var(--dim); line-height:1.5; margin:4px 0 8px;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+  .cand .row{display:flex; gap:10px; align-items:center}
   .cand a{font-size:11.5px; color:var(--cyan); text-decoration:none}
   .cand a:hover{text-decoration:underline}
   .cand .add{margin-left:auto; background:rgba(94,234,212,.1); border:1px solid rgba(94,234,212,.3);
     color:var(--cyan); border-radius:7px; padding:5px 11px; font-size:11.5px; cursor:pointer}
   .cand .add:hover{background:rgba(94,234,212,.2)}
   .cand .add.done{color:#9bd17e; border-color:rgba(127,176,105,.4); background:rgba(127,176,105,.12); cursor:default}
-  .sheet-note{font-size:10.5px; color:var(--faint); line-height:1.55; border-top:1px solid var(--line); padding-top:10px; margin-top:6px}
+  .sheet-note{font-size:10.5px; color:var(--faint); line-height:1.55; border-top:1px solid var(--line); padding-top:10px; margin-top:6px; flex:0 0 auto}
+  @media (max-width:560px){
+    .sheet-wrap{padding:8px}
+    .sheet{max-height:94vh; padding:16px}
+    .sheet-row #go{flex:1}
+  }
   /* quality check */
   .update.qa{background:linear-gradient(180deg,rgba(167,139,250,.12),rgba(167,139,250,.04)); border-color:rgba(167,139,250,.35); color:#dcd2ff}
   .update.qa:hover{border-color:#A78BFA; background:rgba(167,139,250,.18)}
@@ -319,6 +336,10 @@
     </div>
     <div class="adv"><input id="proxy" placeholder="Optional CORS proxy base (advanced) &mdash; prepended to the API URL, or use {url}"></div>
     <div id="status" class="sheet-status"></div>
+    <div id="selbar" class="sheet-selbar">
+      <label><input type="checkbox" id="selAllCb"> Select all</label>
+      <button id="addSel" class="addsel" disabled>Add selected (0)</button>
+    </div>
     <div id="results" class="sheet-results"></div>
     <div class="sheet-note">Live from the GOV.UK Search API (<span class="mono">www.gov.uk/api/search.json</span>). Regulators on their own domains &mdash; Ofgem, ICO, Ofcom, FCA, ETSI &mdash; aren&rsquo;t covered here. Results are unverified: always open the source before relying on it.</div>
   </div>
@@ -699,10 +720,9 @@ function draw(){
 let raf;
 function loop(){ if(running){ step(); } if(fitUntil){ syncSize(); fit(); if(performance.now()>=fitUntil) fitUntil=0; } draw(); raf=requestAnimationFrame(loop); }
 function reheat(a=0.5){ alpha=Math.max(alpha,a); running=true; }
-// reduced motion: settle synchronously
-if(matchMedia("(prefers-reduced-motion:reduce)").matches){
-  for(let i=0;i<260;i++) step(); running=false;
-}
+// pre-warm the layout so the first fit matches the settled graph (fixes initial load not optimising)
+for(let i=0;i<280;i++) step();
+if(matchMedia("(prefers-reduced-motion:reduce)").matches){ running=false; }
 loop();
 
 /* ---------------- zoom & pan ---------------- */
@@ -710,7 +730,7 @@ let scale=0.8, ox=0, oy=0;
 function applyView(){ gView.setAttribute("transform",`translate(${ox},${oy}) scale(${scale})`); }
 function fit(){
   const xs=NODES.filter(n=>!n.hidden);
-  if(!xs.length) return;
+  if(!xs.length || !W || !H) return;
   const minX=Math.min(...xs.map(n=>n.x)), maxX=Math.max(...xs.map(n=>n.x)),
     minY=Math.min(...xs.map(n=>n.y)), maxY=Math.max(...xs.map(n=>n.y));
   const w=maxX-minX||1, h=maxY-minY||1; const pad=70;
@@ -719,8 +739,10 @@ function fit(){
 }
 function syncSize(){ W=svg.clientWidth; H=svg.clientHeight; cx=W/2; cy=H/2; }
 function recentre(){ syncSize(); fit(); }
-function recentreSoon(){ syncSize(); fitUntil=performance.now()+2500; }
-recentreSoon();
+function recentreSoon(ms){ syncSize(); fitUntil=performance.now()+(ms||2500); }
+recentreSoon(1800);
+requestAnimationFrame(()=>requestAnimationFrame(()=>recentre()));
+addEventListener("load",()=>recentre());
 applyView();
 
 /* pan (1 finger / mouse) + pinch-zoom (2 fingers) */
@@ -979,7 +1001,7 @@ function apiURL(){
   const q=encodeURIComponent(document.getElementById("q").value.trim()||"artificial intelligence");
   const since=document.getElementById("since").value;
   let u="https://www.gov.uk/api/search.json?q="+q+"&order=-public_timestamp&count=80"
-    +"&fields=title&fields=link&fields=public_timestamp&fields=description&fields=organisations";
+    +"&fields=title&fields=link&fields=public_timestamp&fields=description&fields=organisations&fields=content_store_document_type";
   ORGS.forEach(o=>u+="&filter_organisations="+o);
   if(since!=="0"){ const d=new Date(); d.setMonth(d.getMonth()-parseInt(since,10));
     u+="&filter_public_timestamp=from:"+d.toISOString().slice(0,10); }
@@ -993,8 +1015,29 @@ function shorten(t){ t=(t||"").trim(); return t.length>52?t.slice(0,50)+"\u2026"
 function orgOf(r){ const o=r.organisations&&r.organisations[0];
   return o?(typeof o==="string"?o:(o.title||o.slug||"GOV.UK")):"GOV.UK"; }
 
+function humanType(t){ if(!t) return ""; return t.replace(/_/g," ").replace(/^./,c=>c.toUpperCase()); }
+const selbar=document.getElementById("selbar"), selAllCb=document.getElementById("selAllCb"), addSelBtn=document.getElementById("addSel");
+function updateSelCount(){
+  const boxes=[...resultsEl.querySelectorAll(".cand-cb:not(:disabled)")];
+  const checked=boxes.filter(b=>b.checked).length;
+  addSelBtn.textContent="Add selected ("+checked+")"; addSelBtn.disabled=checked===0;
+  selAllCb.checked = boxes.length>0 && checked===boxes.length;
+}
+selAllCb.addEventListener("change",()=>{
+  resultsEl.querySelectorAll(".cand-cb:not(:disabled)").forEach(b=>b.checked=selAllCb.checked);
+  updateSelCount();
+});
+addSelBtn.onclick=()=>{
+  resultsEl.querySelectorAll(".cand").forEach(div=>{
+    const cb=div.querySelector(".cand-cb"); if(cb && cb.checked && !cb.disabled){
+      div._add(); }
+  });
+  updateSelCount();
+};
+
 async function runSearch(){
-  resultsEl.innerHTML=""; statusEl.className="sheet-status"; statusEl.textContent="Searching GOV.UK\u2026";
+  resultsEl.innerHTML=""; selbar.classList.remove("show"); selAllCb.checked=false;
+  statusEl.className="sheet-status"; statusEl.textContent="Searching GOV.UK\u2026";
   let data;
   try{
     const res=await fetch(withProxy(apiURL()),{headers:{Accept:"application/json"}});
@@ -1017,17 +1060,26 @@ async function runSearch(){
   });
   statusEl.textContent=all.length+" returned \u00b7 "+fresh.length+" not already on the map.";
   if(!fresh.length){ resultsEl.innerHTML="<div class='sheet-note' style='border:none;margin:0;padding:0'>Everything returned is already represented. Try a wider window or a different term.</div>"; return; }
-  fresh.slice(0,40).forEach(r=>{
-    const org=orgOf(r);
+  selbar.classList.add("show");
+  fresh.slice(0,50).forEach(r=>{
+    const org=orgOf(r), type=humanType(r.content_store_document_type);
+    const meta=[org, r.public_timestamp?fmtDate(r.public_timestamp):"", type].filter(Boolean).join(" \u00b7 ");
     const div=document.createElement("div"); div.className="cand";
-    div.innerHTML="<h4>"+escapeHTML(r.title||"(untitled)")+"</h4>"
-      +"<div class='m mono'>"+escapeHTML(org)+(r.public_timestamp?" \u00b7 "+fmtDate(r.public_timestamp):"")+"</div>"
+    div.innerHTML="<input type='checkbox' class='cand-cb' aria-label='Select'>"
+      +"<div class='cand-body'>"
+      +"<h4>"+escapeHTML(r.title||"(untitled)")+"</h4>"
+      +"<div class='m mono'>"+escapeHTML(meta)+"</div>"
+      +(r.description?"<p class='cand-desc'>"+escapeHTML(r.description)+"</p>":"")
       +"<div class='row'><a href='"+r._full+"' target='_blank' rel='noopener'>Open source \u2197</a>"
-      +"<button class='add'>+ Add to map</button></div>";
-    const btn=div.querySelector(".add");
-    btn.onclick=()=>{ addFound(r,org); btn.classList.add("done"); btn.textContent="\u2713 Added"; btn.disabled=true; };
+      +"<button class='add'>+ Add to map</button></div>"
+      +"</div>";
+    const btn=div.querySelector(".add"), cb=div.querySelector(".cand-cb");
+    div._add=()=>{ if(btn.disabled) return; addFound(r,org); btn.classList.add("done"); btn.textContent="\u2713 Added"; btn.disabled=true; cb.checked=false; cb.disabled=true; };
+    btn.onclick=()=>{ div._add(); updateSelCount(); };
+    cb.addEventListener("change",updateSelCount);
     resultsEl.appendChild(div);
   });
+  updateSelCount();
 }
 document.getElementById("go").onclick=runSearch;
 document.getElementById("q").addEventListener("keydown",e=>{ if(e.key==="Enter") runSearch(); });
