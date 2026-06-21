@@ -135,6 +135,10 @@
   .cand .add:hover{background:rgba(94,234,212,.2)}
   .cand .add.done{color:#9bd17e; border-color:rgba(127,176,105,.4); background:rgba(127,176,105,.12); cursor:default}
   .sheet-note{font-size:10.5px; color:var(--faint); line-height:1.55; border-top:1px solid var(--line); padding-top:10px; margin-top:6px; flex:0 0 auto}
+  .src{display:block; text-decoration:none; border:1px solid var(--line2); border-radius:10px; padding:10px 12px; background:var(--ink2); transition:.15s}
+  .src:hover{border-color:var(--cyan); background:rgba(94,234,212,.07)}
+  .src b{display:block; font-size:13px; color:var(--text); margin-bottom:2px}
+  .src span{display:block; font-size:11px; color:var(--dim); line-height:1.45}
   @media (max-width:560px){
     .sheet-wrap{padding:8px}
     .sheet{max-height:94vh; padding:16px}
@@ -369,6 +373,34 @@
       <button id="qaCancelBtn" class="qa-cancel" style="display:none">Cancel</button>
     </div>
     <div id="qaResults" class="sheet-results"></div>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="intlWrap">
+  <div class="sheet" role="dialog" aria-label="Find new international standards and guidance" aria-modal="true">
+    <button class="x" id="intlX" aria-label="Close">&#x2715;</button>
+    <div class="p-kind"><span class="sw" style="background:var(--cyan)"></span>Official sources &middot; international</div>
+    <h3 class="p-title">Find new standards &amp; guidance</h3>
+    <p class="sheet-desc">International bodies (ISO/IEC, NIST, IEEE, ETSI, the EU, OECD, UNESCO, the Council of Europe&hellip;) each publish on their own sites, with no shared open search a browser can query directly. So this does two honest things: <b>search every official domain at once</b> in a new tab, or jump straight to a body&rsquo;s page. The <b>AI Standards Hub</b> is the best single place to search standards across the SDOs.</p>
+    <div class="sheet-row">
+      <input id="intlQ" value="artificial intelligence" aria-label="Search term">
+      <button id="intlGo">Search all sources &#x2197;</button>
+    </div>
+    <div class="sheet-results" id="intlLinks">
+      <a class="src" href="https://aistandardshub.org/" target="_blank" rel="noopener"><b>AI Standards Hub</b><span>Searchable database of AI standards across ISO/IEC, IEEE, ETSI &amp; CEN-CENELEC (Turing/BSI/NPL/DSIT)</span></a>
+      <a class="src" href="https://www.iso.org/committee/6794475.html" target="_blank" rel="noopener"><b>ISO/IEC JTC 1/SC 42</b><span>Published &amp; in-development international AI standards</span></a>
+      <a class="src" href="https://www.nist.gov/artificial-intelligence" target="_blank" rel="noopener"><b>NIST &mdash; Artificial Intelligence</b><span>US frameworks, profiles &amp; publications</span></a>
+      <a class="src" href="https://www.nist.gov/caisi" target="_blank" rel="noopener"><b>NIST CAISI</b><span>US Center for AI Standards &amp; Innovation</span></a>
+      <a class="src" href="https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai" target="_blank" rel="noopener"><b>European Commission &mdash; AI Act</b><span>Regulation, guidance &amp; the GPAI Code of Practice</span></a>
+      <a class="src" href="https://jtc21.eu/" target="_blank" rel="noopener"><b>CEN-CENELEC JTC 21</b><span>European harmonised AI standards</span></a>
+      <a class="src" href="https://standards.ieee.org/" target="_blank" rel="noopener"><b>IEEE Standards Association</b><span>7000 ethics series &amp; CertifAIEd</span></a>
+      <a class="src" href="https://www.etsi.org/" target="_blank" rel="noopener"><b>ETSI</b><span>Securing AI (TC SAI) &amp; telecoms AI standards</span></a>
+      <a class="src" href="https://oecd.ai/" target="_blank" rel="noopener"><b>OECD.AI / GPAI</b><span>AI principles, policy observatory &amp; dashboards</span></a>
+      <a class="src" href="https://www.unesco.org/en/artificial-intelligence" target="_blank" rel="noopener"><b>UNESCO</b><span>Recommendation on the Ethics of AI</span></a>
+      <a class="src" href="https://www.coe.int/en/web/artificial-intelligence" target="_blank" rel="noopener"><b>Council of Europe</b><span>Framework Convention on AI</span></a>
+      <a class="src" href="https://www.ncsc.gov.uk/" target="_blank" rel="noopener"><b>NCSC (UK)</b><span>Secure-AI guidelines &amp; the Cyber Assessment Framework</span></a>
+    </div>
+    <div class="sheet-note">Opens official pages in a new tab &mdash; nothing is added to the map automatically. &ldquo;Search all sources&rdquo; runs a web search restricted to the official domains above. Always verify against the source.</div>
   </div>
 </div>
 
@@ -656,16 +688,21 @@ const NODES_INTL = [
   // EU + treaty law
   N("euaiact","EU AI Act (Reg 2024/1689)","legal","law","The EU's risk-based AI law — the first comprehensive AI regulation.",[["EUR-Lex text","https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689"],["EC overview","https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai"]]),
   N("coeconv","CoE Framework Convention on AI","legal","law","Council of Europe treaty aligning AI with human rights, democracy and rule of law.",[["Framework Convention","https://www.coe.int/en/web/artificial-intelligence/the-framework-convention-on-artificial-intelligence"]]),
+  N("gpai","EU GPAI Code of Practice","legal","doc","Voluntary EU code helping general-purpose AI providers meet AI Act duties.",[["GPAI Code of Practice","https://digital-strategy.ec.europa.eu/en/policies/ai-code-practice"]]),
   // ISO/IEC family
   N("iso42001","ISO/IEC 42001 (AI management)","govern","doc","World's first certifiable AI management-system standard.",[["ISO/IEC 42001","https://www.iso.org/standard/42001"]]),
-  N("iso22989","ISO/IEC 22989 (concepts & terminology)","govern","doc","Common AI vocabulary and concepts.",[["ISO/IEC 22989","https://www.iso.org/standard/22989"]]),
-  N("iso23053","ISO/IEC 23053 (ML framework)","govern","doc","Framework for AI systems built using machine learning.",[["ISO/IEC 23053","https://www.iso.org/standard/23053"]]),
-  N("iso38507","ISO/IEC 38507 (governance of AI)","govern","doc","Board-level governance implications of AI use.",[["ISO/IEC 38507","https://www.iso.org/standard/38507"]]),
-  N("iso23894","ISO/IEC 23894 (AI risk management)","risk","doc","Guidance on managing AI-specific risk; companion to 42001.",[["ISO/IEC 23894","https://www.iso.org/standard/23894"]]),
+  N("iso22989","ISO/IEC 22989 (concepts & terminology)","govern","doc","Common AI vocabulary and concepts.",[["ISO/IEC 22989","https://www.iso.org/standard/56641.html"]]),
+  N("iso23053","ISO/IEC 23053 (ML framework)","govern","doc","Framework for AI systems built using machine learning.",[["ISO/IEC 23053","https://www.iso.org/standard/74438.html"]]),
+  N("iso38507","ISO/IEC 38507 (governance of AI)","govern","doc","Board-level governance implications of AI use.",[["ISO/IEC 38507","https://www.iso.org/standard/81283.html"]]),
+  N("iso5338","ISO/IEC 5338 (AI lifecycle processes)","govern","doc","Processes for the AI system life cycle, extending ISO/IEC/IEEE 12207/15288.",[["ISO/IEC 5338","https://www.iso.org/standard/82148.html"]]),
+  N("iso42006","ISO/IEC 42006 (certification bodies)","govern","doc","Requirements for bodies that audit and certify AI management systems.",[["ISO/IEC 42006","https://www.iso.org/standard/42006"]]),
+  N("iso23894","ISO/IEC 23894 (AI risk management)","risk","doc","Guidance on managing AI-specific risk; companion to 42001.",[["ISO/IEC 23894","https://www.iso.org/standard/77304.html"]]),
   N("iso42005","ISO/IEC 42005 (AI impact assessment)","risk","doc","How to conduct an AI system impact assessment.",[["ISO/IEC 42005","https://www.iso.org/standard/42005"]]),
-  N("iso24028","ISO/IEC TR 24028 (trustworthiness)","risk","doc","Overview of trustworthiness in AI.",[["ISO/IEC TR 24028","https://www.iso.org/standard/24028"]]),
-  N("iso24027","ISO/IEC TR 24027 (bias)","data","doc","Bias in AI systems and AI-aided decision-making.",[["ISO/IEC TR 24027","https://www.iso.org/standard/24027"]]),
-  N("iso8183","ISO/IEC 8183 (data life cycle)","data","doc","AI data life-cycle framework — governance and quality.",[["ISO/IEC 8183","https://www.iso.org/standard/8183"]]),
+  N("iso24028","ISO/IEC TR 24028 (trustworthiness)","risk","doc","Overview of trustworthiness in AI.",[["ISO/IEC TR 24028","https://www.iso.org/standard/77608.html"]]),
+  N("iso24027","ISO/IEC TR 24027 (bias)","data","doc","Bias in AI systems and AI-aided decision-making.",[["ISO/IEC TR 24027","https://www.iso.org/standard/77607.html"]]),
+  N("iso5259","ISO/IEC 5259 (data quality for ML)","data","doc","Data quality for analytics and machine learning (multi-part series).",[["ISO/IEC 5259-1","https://www.iso.org/standard/81088.html"]]),
+  N("iso25059","ISO/IEC 25059 (quality model for AI)","tevv","doc","SQuaRE quality model for AI systems.",[["ISO/IEC 25059","https://www.iso.org/standard/80655.html"]]),
+  N("iso24029","ISO/IEC TR 24029-1 (robustness of NN)","tevv","doc","Assessing the robustness of neural networks.",[["ISO/IEC TR 24029-1","https://www.iso.org/standard/77609.html"]]),
   // IEEE + global ethics
   N("ieee7000","IEEE 7000-2021 (ethical design)","ethics","doc","Process for addressing ethical concerns during system design.",[["IEEE 7000-2021","https://standards.ieee.org/ieee/7000/6781/"]]),
   N("oecdprin","OECD AI Principles","ethics","doc","First intergovernmental AI standard — values for trustworthy AI.",[["OECD AI Principles","https://oecd.ai/en/ai-principles"]]),
@@ -680,7 +717,7 @@ const LINKS_INTL = [
   L("nistrmf","nist","by"), L("nistgenai","nist","by"), L("nistrmf","nistgenai","profile: GenAI"),
   L("aiactionplan","nist","tasks"), L("ombai","nist","references"), L("aiactionplan","ombai","builds on"), L("caisi","nist","part of"),
   L("iso42001","iso","by"), L("iso22989","iso","by"), L("iso23053","iso","by"), L("iso38507","iso","by"),
-  L("iso23894","iso","by"), L("iso42005","iso","by"), L("iso24028","iso","by"), L("iso24027","iso","by"), L("iso8183","iso","by"),
+  L("iso23894","iso","by"), L("iso42005","iso","by"), L("iso24028","iso","by"), L("iso24027","iso","by"), L("iso5259","iso","by"),
   L("ieee7000","ieee","by"), L("oecdprin","oecdai","by"), L("unescorec","unesco","by"),
   L("euaiact","euaio","overseen by"), L("euaiact","cen","harmonised standards"), L("cen","iso","adopts from"),
   L("etsits","etsi","by"), L("etsits","ncsc","co-authored"), L("ncscsecai","ncsc","by"), L("ukcaf","ncsc","by"),
@@ -692,7 +729,12 @@ const LINKS_INTL = [
   L("oecdprin","unescorec","ethical foundations"), L("coeconv","unescorec","rights-based"),
   L("ieee7000","oecdprin","informed"), L("ieee7000","iso42001","design process"), L("iso24027","ieee7000","bias \u2194 ethics"),
   L("ncscsecai","etsits","basis for"), L("ukcaf","ncscsecai","AI applies"), L("caisi","ncscsecai","security evals"),
-  L("iso8183","iso24027","data \u2194 bias"),
+  L("iso5259","iso24027","data quality \u2194 bias"),
+  L("iso25059","iso","by"), L("iso25059","iso42005","quality \u2194 impact"), L("iso25059","iso24029","quality \u2194 robustness"),
+  L("iso24029","iso","by"), L("iso24029","iso24028","robustness \u2194 trustworthiness"),
+  L("iso5338","iso","by"), L("iso5338","iso23053","lifecycle uses ML framework"), L("iso5338","iso42001","operationalises"),
+  L("iso42006","iso","by"), L("iso42006","iso42001","certifies"),
+  L("gpai","euaiact","Art. 53/55 compliance"), L("gpai","euaio","facilitated by"), L("gpai","intlreport","safety & security"),
   L("aihub","iso","tracks"), L("aihub","cen","tracks"), L("aihub","iso42001","explains"),
   L("bsi","iso42001","national adoption"), L("bsi","aihub","partner"),
   L("oecdai","iso","coordinates"), L("oecdai","intlreport","hosts dialogue"),
@@ -724,6 +766,12 @@ const META_INTL = {
   iso42005:{e:4,t:3,l:"Impact-assessment standard",s:"How to conduct an AI system impact assessment \u2014 process, timing and documentation. A close cousin of data-protection impact assessments, and relevant where AI affects individuals or critical services."},
   iso24028:{e:3,t:4,l:"Technical report",s:"An overview of trustworthiness in AI \u2014 robustness, reliability, transparency and the trade-offs between them. Conceptual groundwork for the risk standards."},
   iso24027:{e:3,t:4,l:"Technical report",s:"Bias in AI systems and AI-aided decision-making \u2014 sources of bias and assessment techniques. The data-and-fairness companion to the risk family."},
+  iso5259:{e:4,t:4,l:"Data-quality standard (5 parts)",s:"ISO/IEC 5259 \u2014 data quality for analytics and machine learning: a multi-part series covering terminology, measures, management requirements, the process framework and governance. Where data governance meets AI engineering, and directly relevant to energy-data-for-AI questions."},
+  iso25059:{e:3,t:4,l:"Quality model (SQuaRE)",s:"ISO/IEC 25059 extends the SQuaRE quality model to AI systems \u2014 the quality characteristics (functional suitability, reliability, robustness, etc.) against which AI can be evaluated. The measurement backbone for TEVV."},
+  iso24029:{e:3,t:5,l:"Technical report (Part 1)",s:"ISO/IEC TR 24029-1 \u2014 assessing the robustness of neural networks: behaviour under perturbation, stability and vulnerability to unexpected inputs. The robustness-specific layer of trustworthiness, useful for assurance in regulated sectors."},
+  iso5338:{e:3,t:4,l:"Lifecycle-process standard",s:"ISO/IEC 5338 defines AI system life-cycle processes, extending the established software/systems lifecycle standards (12207/15288) with AI-specific processes. The process scaffolding under an AI management system."},
+  iso42006:{e:3,t:3,l:"Conformity-assessment standard",s:"ISO/IEC 42006 sets requirements for the bodies that audit and certify ISO/IEC 42001 AI management systems \u2014 the accreditation layer that makes 42001 certificates credible. Relevant if AI assurance becomes procurement currency."},
+  gpai:{e:4,t:3,l:"Voluntary code (3 chapters)",s:"The EU's General-Purpose AI Code of Practice (July 2025) \u2014 a voluntary route for GPAI model providers to demonstrate compliance with AI Act Articles 53 and 55. Three chapters: Transparency and Copyright (all GPAI providers) and Safety & Security (only the handful of systemic-risk models above 10^25 FLOP). The most concrete frontier-model governance text in force."},
   iso8183:{e:3,t:4,l:"Data-lifecycle standard",s:"The AI data life-cycle framework \u2014 acquisition, preparation, quality and provenance. Where data governance meets AI engineering."},
   ieee7000:{e:3,t:3,l:"Process standard",s:"IEEE's process standard for embedding stakeholder ethical values into system design from the outset, with a traceable 'value register'. Voluntary and not certifiable; the IEEE CertifAIEd programme builds on the 7000 series."},
   oecdprin:{e:3,t:1,l:"Principles (Recommendation)",s:"The first intergovernmental AI standard (2019, updated 2024): inclusive growth, human-centred values, transparency, robustness and accountability. The source of the shared 'AI system' definition adopted by the EU, US and others."},
@@ -1121,7 +1169,21 @@ NODES.forEach(n=>n.links&&n.links.forEach(([,u])=>{ try{ existingPaths.add(new U
 
 function openSheet(){ sheetWrap.classList.add("open"); setTimeout(()=>document.getElementById("q").focus(),30); }
 function closeSheet(){ sheetWrap.classList.remove("open"); }
-document.getElementById("updateBtn").onclick=openSheet;
+const intlWrap=document.getElementById("intlWrap");
+function openIntl(){ intlWrap.classList.add("open"); setTimeout(()=>document.getElementById("intlQ").focus(),30); }
+function closeIntl(){ intlWrap.classList.remove("open"); }
+const INTL_DOMAINS=["iso.org","nist.gov","standards.ieee.org","ieee.org","etsi.org","cencenelec.eu","jtc21.eu","digital-strategy.ec.europa.eu","eur-lex.europa.eu","oecd.ai","oecd.org","unesco.org","coe.int","ncsc.gov.uk","aistandardshub.org"];
+function intlSearch(){
+  const term=(document.getElementById("intlQ").value||"").trim()||"artificial intelligence standard";
+  const sites=INTL_DOMAINS.map(d=>"site:"+d).join(" OR ");
+  window.open("https://www.google.com/search?q="+encodeURIComponent(term+" ("+sites+")"),"_blank","noopener");
+}
+document.getElementById("intlGo").onclick=intlSearch;
+document.getElementById("intlQ").addEventListener("keydown",e=>{ if(e.key==="Enter") intlSearch(); });
+document.getElementById("intlX").onclick=closeIntl;
+intlWrap.addEventListener("click",e=>{ if(e.target===intlWrap) closeIntl(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeIntl(); });
+document.getElementById("updateBtn").onclick=()=>{ currentDS==="intl" ? openIntl() : openSheet(); };
 document.getElementById("sheetX").onclick=closeSheet;
 sheetWrap.addEventListener("click",e=>{ if(e.target===sheetWrap) closeSheet(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
@@ -1387,12 +1449,15 @@ function switchDataset(key){
   addedPaths.clear();
   // swap header text
   const t=document.getElementById("mapTitle"), s=document.getElementById("mapSub");
+  const ub=document.getElementById("updateBtn");
   if(key==="intl"){
     t.innerHTML='International AI Standards &amp; Guidance <b>Map</b>';
     s.textContent='Standards, frameworks and codes \u2014 and how they relate by theme';
+    if(ub) ub.innerHTML='&#x21BB;&nbsp; Find new standards &amp; guidance';
   }else{
     t.innerHTML='The UK AI Governance <b>Map</b>';
     s.textContent='Bodies, regulators, guidance, etc. \u2014 and how they connect';
+    if(ub) ub.innerHTML='&#x21BB;&nbsp; Check GOV.UK for new sources';
   }
   // settle + fit
   closePanel();
